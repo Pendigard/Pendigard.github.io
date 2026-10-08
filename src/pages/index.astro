@@ -1,0 +1,115 @@
+---
+import { getImage } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { homeSettings, sections } from '../config/home';
+import koto from '../assets/images/home/koto-lights.jpg';
+import shinjuku from '../assets/images/home/shinjuku-lanterns.jpg';
+import shimokitazawa from '../assets/images/home/shimokitazawa-lanterns.jpg';
+import bus from '../assets/images/home/night-bus.jpg';
+import road from '../assets/images/home/night-road.jpg';
+import '../styles/home.css';
+
+const photographs = [koto, shinjuku, shimokitazawa, bus, road];
+const backgrounds = await Promise.all(photographs.map(async (photo) => {
+  const [large, small] = await Promise.all([
+    getImage({ src: photo, width: 1920, format: 'webp', quality: 78 }),
+    getImage({ src: photo, width: 960, format: 'webp', quality: 76 }),
+  ]);
+  return { large: large.src, small: small.src };
+}));
+---
+
+<BaseLayout
+  title="Célian — Portfolio"
+  description="Explore Célian’s projects, career, and photography."
+>
+  <script slot="head" is:inline define:vars={{ backgrounds }}>
+    (() => {
+      const storageKey = 'celian-home-background';
+      let choice = window.__portfolioHomePhoto?.index;
+      if (choice === undefined) {
+        let previous = -1;
+        try {
+          const stored = sessionStorage.getItem(storageKey);
+          if (stored !== null) previous = Number(stored);
+        } catch {}
+        const options = backgrounds.map((_, index) => index).filter((index) => index !== previous);
+        choice = options[Math.floor(Math.random() * options.length)];
+        try { sessionStorage.setItem(storageKey, String(choice)); } catch {}
+      }
+      const photograph = backgrounds[choice];
+      const url = matchMedia('(max-width: 640px)').matches ? photograph.small : photograph.large;
+      window.__portfolioHomePhoto = { index: choice, url };
+      document.documentElement.style.setProperty('--home-image', 'url("' + url + '")');
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('home-typing');
+        window.setTimeout(() => document.documentElement.classList.remove('home-typing'), 7000);
+      }
+      const preload = document.createElement('link');
+      preload.rel = 'preload';
+      preload.as = 'image';
+      preload.href = url;
+      document.head.append(preload);
+
+      window.__portfolioStopEarlyInput?.();
+      const earlyWheel = (event) => {
+        event.preventDefault();
+        if (Math.abs(event.deltaY) >= 2) {
+          window.__portfolioEarlyDirection = Math.sign(event.deltaY);
+          window.__portfolioEarlyWheelAt = performance.now();
+        }
+      };
+      const earlyKey = (event) => {
+        const direction = ['ArrowDown', 'ArrowRight'].includes(event.key) ? 1
+          : ['ArrowUp', 'ArrowLeft'].includes(event.key) ? -1 : 0;
+        if (direction) {
+          event.preventDefault();
+          window.__portfolioEarlyDirection = direction;
+          delete window.__portfolioEarlyWheelAt;
+        }
+      };
+      const stopEarlyInput = () => {
+        window.removeEventListener('wheel', earlyWheel, true);
+        window.removeEventListener('keydown', earlyKey);
+        document.removeEventListener('astro:before-swap', stopEarlyInput);
+      };
+      window.__portfolioStopEarlyInput = stopEarlyInput;
+      window.addEventListener('wheel', earlyWheel, { passive: false, capture: true });
+      window.addEventListener('keydown', earlyKey);
+      document.addEventListener('astro:before-swap', stopEarlyInput);
+    })();
+  </script>
+
+  <main
+    class="home"
+    data-home
+    style={'--home-blur:' + homeSettings.backgroundBlurPx + 'px;--home-grain-opacity:' + homeSettings.grainOpacity}
+  >
+    <div class="home-background" data-home-background aria-hidden="true"></div>
+    <div class="home-grain" aria-hidden="true"></div>
+
+    <div class="home-content">
+      <h1><span data-type-title>Hi, I’m Célian.</span></h1>
+      <p class="home-sentence">
+        <span data-type-prefix>Feel free to check </span><span class="selector-window"><span class="selector-track" data-section-track><a class="selected-section" href={sections[homeSettings.defaultSection].href} aria-label={'Open ' + sections[homeSettings.defaultSection].label}><span data-type-section>{sections[homeSettings.defaultSection].label}</span></a></span></span>
+      </p>
+      <output class="sr-only" aria-live="polite" data-selection-announcement></output>
+    </div>
+
+    <div class="home-footer">
+      <p class="scroll-hint">Scroll to explore. Select to enter.</p>
+      <!-- <nav aria-label="Portfolio sections" class="section-shortcuts">
+        {sections.map((section, index) => (
+          <a href={section.href} data-section-shortcut data-selected={String(index === homeSettings.defaultSection)} aria-current={index === homeSettings.defaultSection ? 'true' : undefined} data-astro-prefetch>
+            <span class="shortcut-number">{String(index + 1).padStart(2, '0')}</span>
+            <span>{section.label}</span>
+          </a>
+        ))}
+      </nav> -->
+    </div>
+  </main>
+
+  <script>
+    import '../scripts/home';
+  </script>
+</BaseLayout>

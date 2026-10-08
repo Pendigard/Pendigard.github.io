@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+---
+
+<BaseLayout title={name + ' — Célian'} description={name + ' in Célian’s portfolio.'}>
+  <script slot="head" is:inline>
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('section-typing');
+      window.setTimeout(() => document.documentElement.classList.remove('section-typing'), 7000);
+    }
+  </script>
+  <main class="section-placeholder" data-section-placeholder>
+    <div>
+      <p class="section-eyebrow" data-typewriter>Célian / Portfolio</p>
+      <h1 data-typewriter>{name}.</h1>
+      <p class="section-note" data-typewriter>This section is being prepared.</p>
+    </div>
+    <a href="/" data-astro-prefetch data-typewriter data-home-link>Back to the homepage.</a>
+  </main>
+  <script>
+    import '../scripts/section-placeholder';
+  </script>
+</BaseLayout>

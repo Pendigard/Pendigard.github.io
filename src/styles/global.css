@@ -1,0 +1,100 @@
+:root {
+  color: #181714;
+  background: #f5f2e9;
+  font-family: 'Times New Roman', Georgia, serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+}
+
+.typing-cursor::after {
+  content: '';
+  display: inline-block;
+  width: .045em;
+  height: .82em;
+  margin-left: .07em;
+  background: currentColor;
+  vertical-align: -.055em;
+  animation: cursor-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes cursor-blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-cursor::after { animation: none; }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.section-placeholder {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(1.5rem, 5vw, 5rem);
+}
+
+.section-placeholder > div { margin: auto 0; }
+.section-eyebrow { min-height: 1.2em; font-size: .92rem; }
+.section-placeholder h1 {
+  min-height: 1em;
+  margin: 1rem 0;
+  font-size: clamp(3.6rem, 9vw, 9rem);
+  font-weight: 400;
+  letter-spacing: -.055em;
+  line-height: 1;
+}
+.section-note { min-height: 1.2em; }
+.section-placeholder > a {
+  color: inherit;
+  font-style: italic;
+  text-decoration: none;
+  width: fit-content;
+  min-height: 1.2em;
+}
+.section-placeholder > a:hover,
+.section-placeholder > a:focus-visible { text-decoration: underline; }
+
+html.section-typing .section-placeholder [data-typewriter] { visibility: hidden; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-route-direction='up']::view-transition-old(root) {
+    animation: route-out-up 560ms cubic-bezier(.22, .7, .16, 1) both;
+  }
+  html[data-route-direction='up']::view-transition-new(root) {
+    animation: route-in-up 560ms cubic-bezier(.22, .7, .16, 1) both;
+  }
+  html[data-route-direction='down']::view-transition-old(root) {
+    animation: route-out-down 560ms cubic-bezier(.22, .7, .16, 1) both;
+  }
+  html[data-route-direction='down']::view-transition-new(root) {
+    animation: route-in-down 560ms cubic-bezier(.22, .7, .16, 1) both;
+  }
+}
+
+@keyframes route-out-up { to { transform: translateY(-100%); } }
+@keyframes route-in-up { from { transform: translateY(100%); } }
+@keyframes route-out-down { to { transform: translateY(100%); } }
+@keyframes route-in-down { from { transform: translateY(-100%); } }

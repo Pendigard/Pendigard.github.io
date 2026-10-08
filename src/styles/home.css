@@ -1,0 +1,175 @@
+.home {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  background: #111d24;
+  padding: clamp(1.4rem, 4vw, 4.2rem);
+}
+
+.home-background,
+.home-background::before,
+.home-background::after,
+.home-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.home-background {
+  z-index: -2;
+  overflow: hidden;
+  background: radial-gradient(circle at 58% 38%, #365963, #101b23 74%);
+}
+
+.home-background::before {
+  content: '';
+  inset: calc(-1 * var(--home-blur) - 2%);
+  background-image: var(--home-image);
+  background-position: center;
+  background-size: cover;
+  filter: blur(var(--home-blur));
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.home-background.is-loaded::before { opacity: 1; }
+
+.home-background::after {
+  content: '';
+  background: linear-gradient(90deg, rgba(5, 12, 20, .38), rgba(6, 11, 17, .29)),
+    linear-gradient(0deg, rgba(5, 10, 18, .55), transparent 31%, rgba(5, 10, 18, .16));
+}
+
+.home-grain {
+  z-index: -1;
+  opacity: var(--home-grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.72'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+.home-content {
+  width: min(100%, 75rem);
+  transform: translateY(-1.5vh);
+  text-align: center;
+  text-shadow: 0 1px 24px rgba(0, 0, 0, .19);
+}
+
+.home h1 {
+  min-height: 1.1em;
+  margin: 0;
+  font-size: clamp(3.4rem, 7.3vw, 7.7rem);
+  font-weight: 400;
+  letter-spacing: -.057em;
+  line-height: 1.08;
+}
+
+.home-sentence {
+  min-height: 1.32em;
+  margin: clamp(1.7rem, 3.5vw, 3.2rem) 0 0;
+  font-size: clamp(1.55rem, 3.25vw, 3.45rem);
+  letter-spacing: -.035em;
+  line-height: 1.3;
+}
+
+.selector-window {
+  display: inline-block;
+  position: relative;
+  width: 12.5ch;
+  height: 1.3em;
+  overflow: hidden;
+  vertical-align: bottom;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.selector-track { display: block; width: 100%; }
+
+.selected-section {
+  display: block;
+  height: 1.3em;
+  color: inherit;
+  font-style: italic;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.selected-section:hover,
+.selected-section:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .13em;
+}
+
+html.home-typing .home-content [data-type-title],
+html.home-typing .home-content [data-type-prefix],
+html.home-typing .home-content [data-type-section] { visibility: hidden; }
+
+.home-footer {
+  position: absolute;
+  left: clamp(1.4rem, 4vw, 4.2rem);
+  right: clamp(1.4rem, 4vw, 4.2rem);
+  bottom: clamp(1.4rem, 4vw, 4.2rem);
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  font-size: clamp(.82rem, 1vw, 1rem);
+  line-height: 1.4;
+  letter-spacing: .01em;
+}
+
+.scroll-hint { margin: 0; opacity: .8; }
+
+.section-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  column-gap: clamp(1rem, 2.2vw, 2.5rem);
+  row-gap: .55rem;
+}
+
+.section-shortcuts a {
+  display: inline-flex;
+  gap: .45rem;
+  color: inherit;
+  text-decoration: none;
+  opacity: .7;
+  border-bottom: 1px solid transparent;
+  padding-bottom: .22rem;
+  transition: opacity 180ms ease, border-color 180ms ease;
+}
+
+.section-shortcuts a[data-selected='true'],
+.section-shortcuts a:hover,
+.section-shortcuts a:focus-visible {
+  opacity: 1;
+  border-color: currentColor;
+}
+
+.shortcut-number { font-size: .65em; padding-top: .25em; opacity: .72; }
+
+@media (max-width: 720px) {
+  .home-content { transform: translateY(-3vh); }
+  .home h1 { font-size: clamp(3.2rem, 12vw, 5.8rem); }
+  .home-sentence { font-size: clamp(1.7rem, 5.9vw, 2.5rem); }
+  .selector-window { display: block; margin: .08em auto 0; text-align: center; }
+  .home-footer { display: grid; gap: 1.6rem; }
+  .section-shortcuts { justify-content: start; display: grid; grid-template-columns: repeat(2, max-content); }
+}
+
+@media (max-width: 420px) {
+  .home { padding: 1.3rem; }
+  .home-footer { left: 1.3rem; right: 1.3rem; bottom: 1.3rem; }
+  .home h1 { font-size: clamp(3rem, 12.5vw, 4rem); }
+  .home-sentence { font-size: 1.65rem; }
+  .section-shortcuts { column-gap: 1.6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-background::before,
+  .section-shortcuts a { transition: none; }
+}
