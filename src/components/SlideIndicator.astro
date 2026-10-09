@@ -1,0 +1,17 @@
+---
+interface Props { count: number }
+const { count } = Astro.props;
+const barHeightRem = Math.max(.45, Math.min(2.6, 10 / count));
+---
+<div
+  class="slide-indicator"
+  data-slide-indicator
+  role="status"
+  aria-live="polite"
+  aria-label={`Slide 1 of ${count}`}
+  style={`--indicator-bar-height:${barHeightRem}rem`}
+>
+  {Array.from({ length: count }, (_, index) => (
+    <span class="slide-indicator-bar" data-slide-index={index} data-active={String(index === 0)} aria-hidden="true"></span>
+  ))}
+</div>

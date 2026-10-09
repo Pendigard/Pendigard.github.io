@@ -8,6 +8,7 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
+const isHome = Astro.url.pathname === '/';
 ---
 
 <!doctype html>
@@ -20,8 +21,9 @@ const { title, description } = Astro.props;
     <ClientRouter />
     <slot name="head" />
   </head>
-  <body>
+  <body data-page={isHome ? 'home' : 'interior'}>
     <slot />
+    <a href="/" class="home-return" data-home-return data-astro-prefetch>Back to the homepage.</a>
     <script>
       import '../scripts/route-transition';
     </script>

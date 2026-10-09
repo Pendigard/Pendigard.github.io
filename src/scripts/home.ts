@@ -1,5 +1,6 @@
 import { homeSettings, sections } from '../config/home';
 import { clearTypingCursor, wait, writeText } from './typewriter';
+import { setSkippableAnimation } from './skippable';
 
 type HomeWindow = Window & {
   __portfolioHomePhoto?: { index: number; url: string };
@@ -37,6 +38,7 @@ function initHome() {
   let selected: number = homeSettings.defaultSection;
   let introRunning = !reducedMotion;
   let selectionAnimation: Animation | undefined;
+  let clearSkip = () => {};
   let lastWheelAt = earlyWheelAt ?? -Infinity;
 
   const selectedLink = (index: number) => {
@@ -76,6 +78,7 @@ function initHome() {
     clearTypingCursor();
     document.documentElement.classList.remove('home-typing');
     renderSelection();
+    clearSkip();
   };
 
   const moveTo = async (next: number, duration: number, announce = false, directionHint?: number) => {
@@ -106,11 +109,15 @@ function initHome() {
         { duration, easing: 'cubic-bezier(.22, .7, .16, 1)', fill: 'forwards' },
       );
       selectionAnimation = animation;
+      const clearMoveSkip = !introRunning ? setSkippableAnimation(renderSelection) : () => {};
+      if (!introRunning) clearSkip = clearMoveSkip;
       try {
         await animation.finished;
         if (selectionAnimation === animation) renderSelection();
       } catch {
         // A new gesture takes over the unfinished movement.
+      } finally {
+        clearMoveSkip();
       }
     }
     if (announce) announcement.value = `${sections[selected].label} selected. Open link to visit.`;
@@ -134,6 +141,7 @@ function initHome() {
       if (!(await wait(32, abort.signal))) return;
     }
     introRunning = false;
+    clearSkip();
   };
 
   const userMove = (direction: number) => {
@@ -148,7 +156,7 @@ function initHome() {
     const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * 16
       : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? event.deltaY * window.innerHeight
       : event.deltaY;
-    if (Math.abs(delta) < 1) return;
+    if (Math.abs(delta) < homeSettings.wheelGestureThreshold) return;
 
     const now = performance.now();
     const gap = now - lastWheelAt;
@@ -167,7 +175,7 @@ function initHome() {
       event.preventDefault();
       userMove(-1);
     } else if (event.key === 'Enter' && !(event.target instanceof HTMLAnchorElement)) {
-      home.querySelector<HTMLAnchorElement>('[data-section-shortcut][data-selected="true"]')?.click();
+      track.querySelector<HTMLAnchorElement>('a')?.click();
     }
   };
 
@@ -198,6 +206,7 @@ function initHome() {
     finishIntro();
     userMove(earlyDirection);
   } else {
+    clearSkip = setSkippableAnimation(finishIntro);
     void runIntro();
   }
 
@@ -205,6 +214,7 @@ function initHome() {
     abort.abort();
     clearTypingCursor();
     selectionAnimation?.cancel();
+    clearSkip();
     window.removeEventListener('wheel', onWheel, true);
     window.removeEventListener('keydown', onKeyDown);
     home.removeEventListener('click', onShortcutClick);

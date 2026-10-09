@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import SlideIndicator from './SlideIndicator.astro';
 
 interface Props {
   name: string;
@@ -21,8 +22,8 @@ const { name } = Astro.props;
       <h1 data-typewriter>{name}.</h1>
       <p class="section-note" data-typewriter>This section is being prepared.</p>
     </div>
-    <a href="/" data-astro-prefetch data-typewriter data-home-link>Back to the homepage.</a>
   </main>
+  <SlideIndicator count={1} />
   <script>
     import '../scripts/section-placeholder';
   </script>

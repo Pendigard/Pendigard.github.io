@@ -1,0 +1,252 @@
+import { sectionSettings } from '../config/sections';
+import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
+import { setSkippableAnimation } from './skippable';
+import { clearTypingCursor, wait, writeText } from './typewriter';
+
+let cleanup: (() => void) | undefined;
+let activeRoot: HTMLElement | undefined;
+
+function initBackground() {
+  const root = document.querySelector<HTMLElement>('[data-background]');
+  if (root && root === activeRoot) return;
+  cleanup?.();
+  if (!root) return;
+  activeRoot = root;
+
+  const slides = [...root.querySelectorAll<HTMLElement>('[data-slide]')];
+  const headings = new Map([...root.querySelectorAll<HTMLElement>('[data-part-heading]')]
+    .map((heading) => [heading.dataset.partHeading!, heading]));
+  const headingSources = slides.map((slide) => {
+    const fields = slide.dataset.first === 'true'
+      ? [...headings.get(slide.dataset.part!)!.querySelectorAll<HTMLElement>('[data-typewriter]')]
+      : [];
+    return fields.map((field) => ({ field, value: field.textContent || '' }));
+  });
+  const eventSources = slides.map((slide) => {
+    const fields = [...slide.querySelectorAll<HTMLElement>('.timeline-event')]
+      .flatMap((event) => [...event.querySelectorAll<HTMLElement>('[data-typewriter]')]);
+    return fields.map((field) => ({ field, value: field.textContent || '' }));
+  });
+  const sources = slides.map((_, index) => [...headingSources[index], ...eventSources[index]]);
+  const lines = slides.map((slide) => slide.querySelector<HTMLElement>('.timeline-path')!);
+  slides.forEach((slide, index) => {
+    slide.inert = index !== 0;
+    slide.setAttribute('aria-hidden', String(index !== 0));
+  });
+  const indicator = document.querySelector<HTMLElement>('[data-slide-indicator]')!;
+  const homeLink = document.querySelector<HTMLAnchorElement>('[data-home-return]')!;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const revealed = new Set<number>();
+  const arrivedHeadings = new Set<string>();
+  let current = 0;
+  let leaving = false;
+  let moving = false;
+  let gestureLocked = false;
+  let gestureTimer = 0;
+  let accumulatedWheel = 0;
+  let introAbort: AbortController | undefined;
+  let lineAnimation: Animation | undefined;
+  let clearSkip = () => {};
+  let slideAnimations: Animation[] = [];
+
+  const showHeading = (part: string) => {
+    headings.forEach((heading, name) => {
+      const active = name === part;
+      heading.classList.toggle('is-active', active);
+      heading.setAttribute('aria-hidden', String(!active));
+    });
+  };
+
+  const updateIndicator = () => {
+    indicator.setAttribute('aria-label', `Slide ${current + 1} of ${slides.length}`);
+    indicator.querySelectorAll<HTMLElement>('[data-slide-index]').forEach((bar, index) => {
+      bar.dataset.active = String(index === current);
+    });
+  };
+
+  const finishSlide = (index: number) => {
+    introAbort?.abort();
+    lineAnimation?.cancel();
+    lineAnimation = undefined;
+    lines[index].style.transform = '';
+    sources[index].forEach(({ field, value }) => { field.textContent = value; });
+    clearTypingCursor();
+    clearSkip();
+    revealed.add(index);
+    if (index === 0) finishHomeReturn();
+  };
+
+  const revealSlide = async (index: number) => {
+    if (revealed.has(index)) return;
+    if (reducedMotion) { revealed.add(index); return; }
+    const abort = new AbortController();
+    introAbort = abort;
+    const fieldsToWrite = arrivedHeadings.has(slides[index].dataset.part!)
+      ? eventSources[index] : sources[index];
+    fieldsToWrite.forEach(({ field }) => { field.textContent = ''; });
+    lines[index].style.transform = 'scaleY(0)';
+    clearSkip = setSkippableAnimation(() => finishSlide(index));
+
+    const first = slides[index].dataset.first === 'true';
+    lineAnimation = lines[index].animate(
+      [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }],
+      { duration: sectionSettings.lineDrawMs, easing: 'ease-in-out', fill: 'forwards' },
+    );
+    // The first path grows toward its arrow; continuations grow toward their base.
+    lines[index].style.transformOrigin = first ? 'center bottom' : 'center top';
+    try { await lineAnimation.finished; } catch { return; }
+    if (abort.signal.aborted) return;
+    lines[index].style.transform = '';
+    lineAnimation.cancel();
+    lineAnimation = undefined;
+
+    for (const { field, value } of fieldsToWrite) {
+      if (!(await writeText(field, value, sectionSettings.characterMs, abort.signal))) return;
+      if (!(await wait(sectionSettings.betweenFieldsMs, abort.signal))) return;
+    }
+    if (!abort.signal.aborted) {
+      clearSkip();
+      revealed.add(index);
+      arrivedHeadings.add(slides[index].dataset.part!);
+    }
+  };
+
+  const returnHome = () => {
+    if (leaving) return;
+    leaving = true;
+    finishSlide(current);
+    homeLink.click();
+  };
+
+  const move = async (step: number) => {
+    if (moving || leaving) return;
+    const next = current + step;
+    if (next < 0) { returnHome(); return; }
+    if (next >= slides.length) return;
+    moving = true;
+    finishSlide(current);
+    const outgoing = slides[current];
+    const incoming = slides[next];
+    const changingPart = outgoing.dataset.part !== incoming.dataset.part;
+    const outgoingHeading = headings.get(outgoing.dataset.part!)!;
+    const incomingHeading = headings.get(incoming.dataset.part!)!;
+    if (changingPart) {
+      arrivedHeadings.add(incoming.dataset.part!);
+      headingSources[next].forEach(({ field, value }) => { field.textContent = value; });
+    }
+    if (!reducedMotion && !revealed.has(next)) {
+      eventSources[next].forEach(({ field }) => { field.textContent = ''; });
+      if (!arrivedHeadings.has(incoming.dataset.part!)) {
+        headingSources[next].forEach(({ field }) => { field.textContent = ''; });
+      }
+      lines[next].style.transform = 'scaleY(0)';
+    }
+    // A heading stays fixed within its timeline, then travels with the slide
+    // at the boundary so the next timeline can take its place.
+    if (changingPart && !reducedMotion) incomingHeading.classList.add('is-active');
+    incoming.classList.add('is-entering');
+    incoming.inert = false;
+    incoming.setAttribute('aria-hidden', 'false');
+
+    if (!reducedMotion) {
+      const distance = step > 0 ? 100 : -100;
+      const timing: KeyframeAnimationOptions = {
+        duration: sectionSettings.slideMoveMs,
+        easing: 'cubic-bezier(.22, .7, .16, 1)',
+        fill: 'forwards',
+      };
+      slideAnimations = [
+        outgoing.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${-distance}%)` }], timing),
+        incoming.animate([{ transform: `translateY(${distance}%)` }, { transform: 'translateY(0)' }], timing),
+      ];
+      if (changingPart) {
+        const offset = root.getBoundingClientRect().height * Math.sign(step);
+        slideAnimations.push(
+          outgoingHeading.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${-offset}px)` }], timing),
+          incomingHeading.animate([{ transform: `translateY(${offset}px)` }, { transform: 'translateY(0)' }], timing),
+        );
+      }
+      clearSkip = setSkippableAnimation(() => {
+        slideAnimations.forEach((animation) => animation.finish());
+        finishSlide(next);
+      });
+      try { await Promise.all(slideAnimations.map((animation) => animation.finished)); } catch { return; }
+      clearSkip();
+      slideAnimations.forEach((animation) => animation.cancel());
+      slideAnimations = [];
+    }
+
+    outgoing.classList.remove('is-active');
+    outgoing.inert = true;
+    outgoing.setAttribute('aria-hidden', 'true');
+    incoming.classList.remove('is-entering');
+    incoming.classList.add('is-active');
+    current = next;
+    showHeading(incoming.dataset.part!);
+    updateIndicator();
+    moving = false;
+    void revealSlide(current);
+  };
+
+  const onWheel = (event: WheelEvent) => {
+    event.preventDefault();
+    window.clearTimeout(gestureTimer);
+    gestureTimer = window.setTimeout(() => {
+      gestureLocked = false;
+      accumulatedWheel = 0;
+    }, sectionSettings.wheelGestureGapMs);
+    if (gestureLocked) return;
+    const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * 16
+      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? event.deltaY * innerHeight
+      : event.deltaY;
+    accumulatedWheel += delta;
+    if (Math.abs(accumulatedWheel) < sectionSettings.wheelThreshold) return;
+    gestureLocked = true;
+    const step = accumulatedWheel > 0 ? 1 : -1;
+    accumulatedWheel = 0;
+    void move(step);
+  };
+
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.target instanceof HTMLElement &&
+      (event.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(event.target.tagName))) return;
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      void move(event.key === 'ArrowDown' ? 1 : -1);
+    }
+  };
+
+  window.addEventListener('wheel', onWheel, { passive: false, capture: true });
+  window.addEventListener('keydown', onKeyDown);
+  showHeading(slides[0].dataset.part!);
+  updateIndicator();
+  prepareHomeReturn();
+  if (!reducedMotion) {
+    sources[0].forEach(({ field }) => { field.textContent = ''; });
+    lines[0].style.transform = 'scaleY(0)';
+  }
+  void (async () => {
+    await revealSlide(0);
+    if (activeRoot !== root || leaving) return;
+    await writeHomeReturn();
+  })();
+
+  cleanup = () => {
+    introAbort?.abort();
+    slideAnimations.forEach((animation) => animation.cancel());
+    lineAnimation?.cancel();
+    clearSkip();
+    clearTypingCursor();
+    finishHomeReturn();
+    window.clearTimeout(gestureTimer);
+    window.removeEventListener('wheel', onWheel, true);
+    window.removeEventListener('keydown', onKeyDown);
+    activeRoot = undefined;
+    cleanup = undefined;
+  };
+}
+
+document.addEventListener('astro:page-load', initBackground);
+document.addEventListener('astro:before-swap', () => cleanup?.());
+initBackground();

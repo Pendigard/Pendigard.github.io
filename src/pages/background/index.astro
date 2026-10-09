@@ -1,0 +1,55 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SlideIndicator from '../../components/SlideIndicator.astro';
+import TimelineSlide from '../../sections/background/TimelineSlide.astro';
+import { experiences, education, type BackgroundEvent } from '../../sections/background/content';
+import { backgroundSettings } from '../../sections/background/settings';
+import '../../styles/background.css';
+
+function chunks<T>(items: T[], size: number): T[][] {
+  if (!Number.isInteger(size) || size < 1) throw new Error('eventsPerSlide must be a positive integer');
+  return Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+    items.slice(index * size, (index + 1) * size));
+}
+
+const parts: { name: 'Experiences' | 'Education'; entries: BackgroundEvent[][] }[] = [
+  { name: 'Experiences', entries: chunks(experiences, backgroundSettings.eventsPerSlide.experiences) },
+  { name: 'Education', entries: chunks(education, backgroundSettings.eventsPerSlide.education) },
+];
+const slides = parts.flatMap(({ name, entries }) => entries.map((chunk, partIndex) => ({
+  name,
+  chunk,
+  first: partIndex === 0,
+  last: partIndex === entries.length - 1,
+})));
+---
+<BaseLayout title="Background — Célian" description="Célian’s background: experiences and education. Content is being confirmed.">
+  <noscript><style>
+    .background-section { height: auto; min-height: 0; overflow: visible; }
+    .background-slide { position: relative; min-height: 100svh; visibility: visible; }
+    .background-slide .timeline-path { transform: none; }
+    .background-heading-layer { position: relative; display: flex; flex-wrap: wrap; gap: 2rem; }
+    .background-heading { position: static; visibility: visible; padding: 1.5rem; }
+  </style></noscript>
+  <main
+    class="background-section"
+    data-background
+    style={`--period-size:${backgroundSettings.fontSize.period};--event-title-size:${backgroundSettings.fontSize.title};--subtitle-size:${backgroundSettings.fontSize.subtitle};--description-size:${backgroundSettings.fontSize.description};--event-title-mobile-size:${backgroundSettings.fontSize.titleMobile};--subtitle-mobile-size:${backgroundSettings.fontSize.subtitleMobile};--description-mobile-size:${backgroundSettings.fontSize.descriptionMobile};--part-title-size:${backgroundSettings.fontSize.partTitle};--part-title-mobile-size:${backgroundSettings.fontSize.partTitleMobile}`}
+  >
+    <div class="background-heading-layer" data-heading-layer>
+      {parts.map(({ name }, index) => (
+        <header class:list={['background-heading', { 'is-active': index === 0 }]} data-part-heading={name}>
+          <span class="background-section-name" data-typewriter>Background.</span>
+          <h2 data-typewriter>{name}.</h2>
+        </header>
+      ))}
+    </div>
+    {slides.map(({ name, chunk, first, last }, index) => (
+      <TimelineSlide part={name} entries={chunk} first={first} last={last} index={index} />
+    ))}
+  </main>
+  <SlideIndicator count={slides.length} />
+  <script>
+    import '../../scripts/background';
+  </script>
+</BaseLayout>

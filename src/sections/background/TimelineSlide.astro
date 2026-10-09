@@ -1,0 +1,41 @@
+---
+import type { BackgroundEvent } from './content';
+
+interface Props {
+  part: 'Experiences' | 'Education';
+  entries: BackgroundEvent[];
+  first: boolean;
+  last: boolean;
+  index: number;
+}
+
+const { part, entries, first, last, index } = Astro.props;
+---
+<section
+  class:list={['background-slide', { 'is-active': index === 0 }]}
+  data-slide
+  data-part={part}
+  data-first={String(first)}
+  data-last={String(last)}
+  aria-label={`${part}, slide ${index + 1}`}
+>
+  <div class="background-timeline">
+    <div class="timeline-path" aria-hidden="true"><span class="timeline-tip"></span></div>
+    <div class="timeline-events" style={`--event-count:${entries.length}`}>
+      {entries.map((entry) => (
+        <article class="timeline-event">
+          <p class="timeline-period" data-typewriter>{entry.period}</p>
+          <div class="timeline-details">
+            <h3 data-typewriter>{entry.title}</h3>
+            {entry.subtitles && (
+              <div class="timeline-subtitles">
+                {entry.subtitles.map((subtitle) => <p class="timeline-subtitle" data-typewriter>{subtitle}</p>)}
+              </div>
+            )}
+            <p data-typewriter>{entry.description}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
