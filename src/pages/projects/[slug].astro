@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SlideIndicator from '../../components/SlideIndicator.astro';
+import { orderedProjects, type Project } from '../../sections/projects/content';
+import { projectFontVariables } from '../../sections/projects/settings';
+import '../../styles/projects.css';
+
+export function getStaticPaths() {
+  return orderedProjects.filter((project) => project.destination.kind === 'internal')
+    .map((project) => ({ params: { slug: project.slug }, props: { project } }));
+}
+
+const { project } = Astro.props as { project: Project };
+---
+<BaseLayout title={`${project.title} — Célian`} description={project.description}>
+  <main class="project-detail" data-project-detail data-project-slug={project.slug} style={projectFontVariables}>
+    {project.detail.map((slide, index) => (
+      <section class:list={['project-detail-slide', { 'is-active': index === 0 }]} data-slide id={index === 1 ? 'context' : undefined} aria-label={`${project.title}, slide ${index + 1}`}>
+        <div class="project-detail-copy">
+          <span class="projects-eyebrow" data-typewriter>{project.context ? `${project.context}.` : 'Project overview.'}</span>
+          <h1 data-typewriter>{slide.heading}</h1>
+          <p data-typewriter>{slide.body}</p>
+        </div>
+      </section>
+    ))}
+  </main>
+  <a class="project-back" href="/projects/" data-project-back data-astro-prefetch>Back to Projects.</a>
+  <SlideIndicator count={project.detail.length} />
+  <script>import '../../scripts/project-detail';</script>
+</BaseLayout>

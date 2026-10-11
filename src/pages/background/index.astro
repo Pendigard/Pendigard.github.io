@@ -39,8 +39,8 @@ const slides = parts.flatMap(({ name, entries }) => entries.map((chunk, partInde
     <div class="background-heading-layer" data-heading-layer>
       {parts.map(({ name }, index) => (
         <header class:list={['background-heading', { 'is-active': index === 0 }]} data-part-heading={name}>
-          <span class="background-section-name" data-typewriter>Background.</span>
-          <h2 data-typewriter>{name}.</h2>
+          <span class="background-section-name" data-typewriter data-heading-typewriter>Background.</span>
+          <h2 data-typewriter data-heading-typewriter>{name}.</h2>
         </header>
       ))}
     </div>

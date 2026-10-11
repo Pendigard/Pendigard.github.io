@@ -1,8 +1,12 @@
 export const sectionSettings = {
-  characterMs: 16,
-  betweenFieldsMs: 8,
+  characterMs: 1,
+  headingCharacterMs: 24,
+  betweenFieldsMs: 1,
   wheelThreshold: 12,
   wheelGestureGapMs: 45,
+  wheelLockMinMs: 180,
   slideMoveMs: 560,
-  lineDrawMs: 850,
-} as const;
+  slideMoveEasing: 'cubic-bezier(.22, .7, .16, 1)',
+  lineDrawMs: 425,
+  lineDrawEasing: 'ease-in-out',
+};

@@ -1,4 +1,5 @@
 import { sectionSettings } from '../config/sections';
+import { animateSlidePair, updateSlideIndicator, wheelDelta } from './section-motion';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
@@ -41,9 +42,9 @@ function initBackground() {
   let current = 0;
   let leaving = false;
   let moving = false;
-  let gestureLocked = false;
-  let gestureTimer = 0;
-  let accumulatedWheel = 0;
+  let wheelLocked = false;
+  let wheelTimer = 0;
+  let wheelAmount = 0;
   let introAbort: AbortController | undefined;
   let lineAnimation: Animation | undefined;
   let clearSkip = () => {};
@@ -58,10 +59,7 @@ function initBackground() {
   };
 
   const updateIndicator = () => {
-    indicator.setAttribute('aria-label', `Slide ${current + 1} of ${slides.length}`);
-    indicator.querySelectorAll<HTMLElement>('[data-slide-index]').forEach((bar, index) => {
-      bar.dataset.active = String(index === current);
-    });
+    updateSlideIndicator(indicator, current, slides.length);
   };
 
   const finishSlide = (index: number) => {
@@ -90,7 +88,7 @@ function initBackground() {
     const first = slides[index].dataset.first === 'true';
     lineAnimation = lines[index].animate(
       [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }],
-      { duration: sectionSettings.lineDrawMs, easing: 'ease-in-out', fill: 'forwards' },
+      { duration: sectionSettings.lineDrawMs, easing: sectionSettings.lineDrawEasing, fill: 'forwards' },
     );
     // The first path grows toward its arrow; continuations grow toward their base.
     lines[index].style.transformOrigin = first ? 'center bottom' : 'center top';
@@ -101,7 +99,9 @@ function initBackground() {
     lineAnimation = undefined;
 
     for (const { field, value } of fieldsToWrite) {
-      if (!(await writeText(field, value, sectionSettings.characterMs, abort.signal))) return;
+      const characterMs = field.hasAttribute('data-heading-typewriter')
+        ? sectionSettings.headingCharacterMs : sectionSettings.characterMs;
+      if (!(await writeText(field, value, characterMs, abort.signal))) return;
       if (!(await wait(sectionSettings.betweenFieldsMs, abort.signal))) return;
     }
     if (!abort.signal.aborted) {
@@ -149,16 +149,8 @@ function initBackground() {
     incoming.setAttribute('aria-hidden', 'false');
 
     if (!reducedMotion) {
-      const distance = step > 0 ? 100 : -100;
-      const timing: KeyframeAnimationOptions = {
-        duration: sectionSettings.slideMoveMs,
-        easing: 'cubic-bezier(.22, .7, .16, 1)',
-        fill: 'forwards',
-      };
-      slideAnimations = [
-        outgoing.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${-distance}%)` }], timing),
-        incoming.animate([{ transform: `translateY(${distance}%)` }, { transform: 'translateY(0)' }], timing),
-      ];
+      const timing: KeyframeAnimationOptions = { duration: sectionSettings.slideMoveMs, easing: sectionSettings.slideMoveEasing, fill: 'forwards' };
+      slideAnimations = animateSlidePair(outgoing, incoming, step, sectionSettings.slideMoveMs, sectionSettings.slideMoveEasing);
       if (changingPart) {
         const offset = root.getBoundingClientRect().height * Math.sign(step);
         slideAnimations.push(
@@ -190,20 +182,18 @@ function initBackground() {
 
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
-    window.clearTimeout(gestureTimer);
-    gestureTimer = window.setTimeout(() => {
-      gestureLocked = false;
-      accumulatedWheel = 0;
+    window.clearTimeout(wheelTimer);
+    wheelTimer = window.setTimeout(() => {
+      wheelLocked = false;
+      wheelAmount = 0;
     }, sectionSettings.wheelGestureGapMs);
-    if (gestureLocked) return;
-    const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * 16
-      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? event.deltaY * innerHeight
-      : event.deltaY;
-    accumulatedWheel += delta;
-    if (Math.abs(accumulatedWheel) < sectionSettings.wheelThreshold) return;
-    gestureLocked = true;
-    const step = accumulatedWheel > 0 ? 1 : -1;
-    accumulatedWheel = 0;
+    if (wheelLocked) return;
+    const delta = wheelDelta(event);
+    wheelAmount += delta;
+    if (Math.abs(wheelAmount) < sectionSettings.wheelThreshold) return;
+    wheelLocked = true;
+    const step = wheelAmount > 0 ? 1 : -1;
+    wheelAmount = 0;
     void move(step);
   };
 
@@ -239,7 +229,7 @@ function initBackground() {
     clearSkip();
     clearTypingCursor();
     finishHomeReturn();
-    window.clearTimeout(gestureTimer);
+    window.clearTimeout(wheelTimer);
     window.removeEventListener('wheel', onWheel, true);
     window.removeEventListener('keydown', onKeyDown);
     activeRoot = undefined;

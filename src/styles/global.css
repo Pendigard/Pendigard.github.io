@@ -121,9 +121,25 @@ html.section-typing .section-placeholder [data-typewriter] { visibility: hidden;
   html[data-route-direction='down']::view-transition-new(root) {
     animation: route-in-down 560ms cubic-bezier(.22, .7, .16, 1) both;
   }
+  html[data-route-direction='right']::view-transition-old(root) {
+    animation: route-out-right 560ms cubic-bezier(.22, .7, .16, 1) both;
+  }
+  html[data-route-direction='right']::view-transition-new(root) {
+    animation: route-in-right 560ms cubic-bezier(.22, .7, .16, 1) both;
+  }
+  html[data-route-direction='left']::view-transition-old(root) {
+    animation: route-out-left 560ms cubic-bezier(.22, .7, .16, 1) both;
+  }
+  html[data-route-direction='left']::view-transition-new(root) {
+    animation: route-in-left 560ms cubic-bezier(.22, .7, .16, 1) both;
+  }
 }
 
 @keyframes route-out-up { to { transform: translateY(-100%); } }
 @keyframes route-in-up { from { transform: translateY(100%); } }
 @keyframes route-out-down { to { transform: translateY(100%); } }
 @keyframes route-in-down { from { transform: translateY(-100%); } }
+@keyframes route-out-right { to { transform: translateX(-100%); } }
+@keyframes route-in-right { from { transform: translateX(100%); } }
+@keyframes route-out-left { to { transform: translateX(100%); } }
+@keyframes route-in-left { from { transform: translateX(-100%); } }

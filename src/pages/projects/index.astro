@@ -1,4 +1,48 @@
 ---
-import SectionPlaceholder from '../../components/SectionPlaceholder.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SlideIndicator from '../../components/SlideIndicator.astro';
+import { orderedProjects, projectFilters, projectHref } from '../../sections/projects/content';
+import { projectFontVariables, projectLayoutVariables, projectSettings } from '../../sections/projects/settings';
+import '../../styles/projects.css';
 ---
-<SectionPlaceholder name="My Projects" />
+<BaseLayout title="Projects — Célian" description="Research, machine learning and software projects by Célian.">
+  <script slot="head" is:inline define:vars={{ introFallbackMs: projectSettings.introFallbackMs }}>
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('projects-typing');
+      window.setTimeout(() => document.documentElement.classList.remove('projects-typing'), introFallbackMs);
+    }
+  </script>
+  <main class="projects-section" data-projects data-filters={JSON.stringify(projectFilters)} style={`--projects-selector-width-ms:${projectSettings.selector.widthMs}ms;--projects-selector-easing:${projectSettings.selector.easing};${projectFontVariables}${projectLayoutVariables}`}>
+    <header class="projects-heading">
+      <span class="projects-eyebrow" data-projects-eyebrow>Projects.</span>
+      <h1 data-projects-title>All.</h1>
+      <div class="projects-selector" data-projects-selector aria-label="Project filters">
+        <span data-filter-prefix>You can also look at </span><span class="projects-candidate-window"><span class="projects-candidate-track" data-candidate-track><button type="button" data-candidate>{projectFilters[0]}</button></span></span><span data-filter-suffix> projects.</span>
+        <button class="projects-next-filter" type="button" data-next-candidate aria-label="Show another project filter">↕</button>
+      </div>
+      <output class="sr-only" aria-live="polite" data-projects-announcement></output>
+    </header>
+    <div class="projects-list-frame" data-list-frame>
+      <div class="projects-slides" data-projects-slides></div>
+      <div class="projects-measure" data-projects-measure aria-hidden="true"></div>
+      <div class="projects-source" data-projects-source>
+        {orderedProjects.map((project) => (
+          <article class="project-entry" data-project-id={project.slug} data-tags={JSON.stringify(project.tags)}>
+            <div class="project-rule" aria-hidden="true"></div>
+            <h2><a href={projectHref(project)} aria-label={`${project.title} — ${project.destination.label}`} data-project-main={project.slug} data-typewriter>{project.title}</a></h2>
+            <div class="project-secondary-links">
+              <span class="project-destination-label" data-typewriter>{project.destination.label}</span>
+              {project.secondaryLinks.map((link) => <a href={link.href} data-typewriter>{link.label}</a>)}
+            </div>
+            <p class="project-description" data-typewriter>{project.description}</p>
+            {project.context && <div class="project-context" data-typewriter>{project.context}.</div>}
+            <div class="project-skills" data-typewriter>{`Skills · ${project.skills.join(' · ')}`}</div>
+            <div class="project-technologies" data-typewriter>{`Tools · ${project.technologies.join(' · ')}`}</div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </main>
+  <SlideIndicator count={1} />
+  <script>import '../../scripts/projects';</script>
+</BaseLayout>

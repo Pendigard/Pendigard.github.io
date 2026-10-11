@@ -26,7 +26,7 @@ const { part, entries, first, last, index } = Astro.props;
         <article class="timeline-event">
           <p class="timeline-period" data-typewriter>{entry.period}</p>
           <div class="timeline-details">
-            <h3 data-typewriter>{entry.title}</h3>
+            <h3 data-typewriter data-heading-typewriter>{entry.title}</h3>
             {entry.subtitles && (
               <div class="timeline-subtitles">
                 {entry.subtitles.map((subtitle) => <p class="timeline-subtitle" data-typewriter>{subtitle}</p>)}
