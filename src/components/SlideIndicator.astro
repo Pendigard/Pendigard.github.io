@@ -1,15 +1,15 @@
 ---
-interface Props { count: number }
-const { count } = Astro.props;
-const barHeightRem = Math.max(.45, Math.min(2.6, 10 / count));
+interface Props { count: number; axis?: 'vertical' | 'horizontal' }
+const { count, axis = 'vertical' } = Astro.props;
 ---
 <div
   class="slide-indicator"
   data-slide-indicator
+  data-axis={axis}
   role="status"
   aria-live="polite"
-  aria-label={`Slide 1 of ${count}`}
-  style={`--indicator-bar-height:${barHeightRem}rem`}
+  aria-label={axis === 'vertical' ? `Slide 1 of ${count}` : `View 1 of ${count}`}
+  hidden={count < 2}
 >
   {Array.from({ length: count }, (_, index) => (
     <span class="slide-indicator-bar" data-slide-index={index} data-active={String(index === 0)} aria-hidden="true"></span>

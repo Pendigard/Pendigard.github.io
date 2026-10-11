@@ -14,8 +14,10 @@ export function animateSlidePair(
 }
 
 export function updateSlideIndicator(indicator: HTMLElement, current: number, count: number) {
-  indicator.setAttribute('aria-label', `Slide ${current + 1} of ${count}`);
-  indicator.style.setProperty('--indicator-bar-height', `${Math.max(.45, Math.min(2.6, 10 / count))}rem`);
+  const axis = indicator.dataset.axis === 'horizontal' ? 'horizontal' : 'vertical';
+  indicator.hidden = count < 2;
+  indicator.setAttribute('aria-label', `${axis === 'vertical' ? 'Slide' : 'View'} ${current + 1} of ${count}`);
+  indicator.style.setProperty('--indicator-bar-length', `${Math.max(.45, Math.min(2.6, 10 / Math.max(1, count)))}rem`);
   if (indicator.querySelectorAll('[data-slide-index]').length !== count) {
     indicator.replaceChildren(...Array.from({ length: count }, (_, index) => {
       const bar = document.createElement('span');

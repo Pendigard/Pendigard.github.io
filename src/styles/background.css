@@ -105,6 +105,8 @@
   line-height: 1.2;
 }
 .timeline-subtitle + .timeline-subtitle { margin-top: .2em; }
+.timeline-project-link { display: inline-block; margin-top: .55em; color: inherit; font-size: var(--description-size); font-style: italic; text-decoration: none; }
+.timeline-project-link:hover, .timeline-project-link:focus-visible { text-decoration: underline; text-underline-offset: .15em; }
 
 .background-heading-layer {
   position: absolute;
@@ -164,6 +166,7 @@
   .timeline-details .timeline-subtitle { font-size: var(--subtitle-mobile-size); }
   .timeline-subtitles { margin-bottom: .65rem; }
   .timeline-details p:not(.timeline-subtitle) { margin-right: 1rem; font-size: var(--description-mobile-size); line-height: 1.25; }
+  .timeline-project-link { font-size: var(--description-mobile-size); }
   .background-slide[data-first='true'] .timeline-path { top: 31%; }
   .background-slide[data-last='true'] .timeline-path { bottom: 12%; }
   .background-slide[data-first='true'][data-last='true'] .timeline-path { bottom: 0; }

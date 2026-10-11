@@ -49,6 +49,7 @@ const slides = parts.flatMap(({ name, entries }) => entries.map((chunk, partInde
     ))}
   </main>
   <SlideIndicator count={slides.length} />
+  <SlideIndicator count={1} axis="horizontal" />
   <script>
     import '../../scripts/background';
   </script>

@@ -1,8 +1,8 @@
 export const sections = [
-  { label: 'My Background.', href: '/background/' },
-  { label: 'My Projects.', href: '/projects/' },
-  { label: 'About Me.', href: '/me/' },
-  { label: 'My Photos.', href: '/photos/' },
+  { label: 'Background.', href: '/background/' },
+  { label: 'Projects.', href: '/projects/' },
+  { label: 'Profile.', href: '/profile/' },
+  { label: 'Photos.', href: '/photos/' },
 ] as const;
 
 export const homeSettings = {
@@ -14,6 +14,9 @@ export const homeSettings = {
   beforeDemonstrationMs: 220,
   demonstrationStepMs: 205,
   selectionStepMs: 320,
+  autoScrollIntervalMs: 2000,
+  autoScrollAfterUserMs: 2500,
+  autoScrollStepMs: 900,
   wheelGestureGapMs: 45,
   wheelGestureThreshold: 12,
   wheelCooldownMs: 90,

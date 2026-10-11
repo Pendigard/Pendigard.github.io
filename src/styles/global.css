@@ -45,14 +45,28 @@ body[data-page='home'] .home-return { display: none; }
   gap: clamp(.2rem, .5vh, .38rem);
   transform: translateY(-50%);
 }
+.slide-indicator[hidden] { display: none; }
+.slide-indicator[data-axis='horizontal'] {
+  left: 50%;
+  top: auto;
+  bottom: clamp(4rem, 8vh, 6rem);
+  flex-direction: row;
+  gap: .4rem;
+  transform: translateX(-50%);
+}
 
 .slide-indicator-bar {
   display: block;
+  flex: none;
   width: clamp(.15rem, .5vw, .20rem);
-  height: var(--indicator-bar-height);
+  height: var(--indicator-bar-length, 2.6rem);
   background: #2a2925;
   opacity: .13;
   transition: opacity 180ms ease;
+}
+.slide-indicator[data-axis='horizontal'] .slide-indicator-bar {
+  width: var(--indicator-bar-length, 2.6rem);
+  height: clamp(.15rem, .5vw, .20rem);
 }
 
 .slide-indicator-bar[data-active='true'] { opacity: .47; }

@@ -2,6 +2,7 @@ import { homeSettings, sections } from '../config/home';
 import { clearTypingCursor, wait, writeText } from './typewriter';
 import { setSkippableAnimation } from './skippable';
 import { listenToGestures } from './gestures';
+import { createAutoSelection } from './auto-selection';
 
 type HomeWindow = Window & {
   __portfolioHomePhoto?: { index: number; url: string };
@@ -38,6 +39,7 @@ function initHome() {
 
   let selected: number = homeSettings.defaultSection;
   let introRunning = !reducedMotion;
+  let demonstrating = false;
   let selectionAnimation: Animation | undefined;
   let clearSkip = () => {};
 
@@ -71,14 +73,16 @@ function initHome() {
   const finishIntro = () => {
     if (!introRunning) return;
     introRunning = false;
+    demonstrating = false;
     abort.abort();
     title.textContent = 'Hi, I’m Célian.';
-    prefix.textContent = 'Feel free to check ';
+    prefix.textContent = 'Feel free to check my ';
     sectionText.textContent = sections[selected].label;
     clearTypingCursor();
     document.documentElement.classList.remove('home-typing');
     renderSelection();
     clearSkip();
+    autoSelection.start();
   };
 
   const moveTo = async (next: number, duration: number, announce = false, directionHint?: number) => {
@@ -123,6 +127,14 @@ function initHome() {
     if (announce) announcement.value = `${sections[selected].label} selected. Open link to visit.`;
   };
 
+  const autoSelection = createAutoSelection({
+    intervalMs: homeSettings.autoScrollIntervalMs,
+    afterUserMs: homeSettings.autoScrollAfterUserMs,
+    enabled: !reducedMotion,
+    move: () => moveTo((selected + 1) % sections.length, homeSettings.autoScrollStepMs, false, 1),
+    cancelMove: renderSelection,
+  });
+
   const runIntro = async () => {
     title.textContent = '';
     prefix.textContent = '';
@@ -130,22 +142,26 @@ function initHome() {
     document.documentElement.classList.remove('home-typing');
     if (!(await writeText(title, 'Hi, I’m Célian.', homeSettings.titleCharacterMs, abort.signal))) return;
     if (!(await wait(homeSettings.betweenLinesMs, abort.signal))) return;
-    if (!(await writeText(prefix, 'Feel free to check ', homeSettings.sentenceCharacterMs, abort.signal))) return;
+    if (!(await writeText(prefix, 'Feel free to check my ', homeSettings.sentenceCharacterMs, abort.signal))) return;
     if (!(await writeText(sectionText, sections[selected].label, homeSettings.sectionCharacterMs, abort.signal))) return;
     document.documentElement.classList.remove('home-typing');
     if (!(await wait(homeSettings.beforeDemonstrationMs, abort.signal))) return;
 
+    demonstrating = true;
     for (const next of [1, 2, 3, 2, 1, homeSettings.defaultSection]) {
       if (abort.signal.aborted) return;
       await moveTo(next, homeSettings.demonstrationStepMs);
       if (!(await wait(32, abort.signal))) return;
     }
     introRunning = false;
+    demonstrating = false;
     clearSkip();
+    autoSelection.start();
   };
 
   const userMove = (direction: number) => {
     finishIntro();
+    autoSelection.userActivity();
     const next = (selected + direction + sections.length) % sections.length;
     void moveTo(next, homeSettings.selectionStepMs, true, direction);
   };
@@ -183,6 +199,18 @@ function initHome() {
 
   window.addEventListener('keydown', onKeyDown);
   home.addEventListener('click', onShortcutClick);
+  const onWheel = () => autoSelection.userActivity();
+  const onTouchStart = () => autoSelection.userActivity();
+  home.addEventListener('wheel', onWheel, { capture: true, passive: true });
+  home.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
+  const selector = home.querySelector<HTMLElement>('.selector-window')!;
+  const onMouseEnter = () => {
+    autoSelection.pause();
+    if (demonstrating) finishIntro();
+  };
+  const onMouseLeave = () => autoSelection.resume();
+  selector.addEventListener('mouseenter', onMouseEnter);
+  selector.addEventListener('mouseleave', onMouseLeave);
   updateShortcuts();
 
   const photo = (window as HomeWindow).__portfolioHomePhoto;
@@ -212,8 +240,13 @@ function initHome() {
     selectionAnimation?.cancel();
     clearSkip();
     stopGestures();
+    autoSelection.stop();
     window.removeEventListener('keydown', onKeyDown);
     home.removeEventListener('click', onShortcutClick);
+    home.removeEventListener('wheel', onWheel, true);
+    home.removeEventListener('touchstart', onTouchStart, true);
+    selector.removeEventListener('mouseenter', onMouseEnter);
+    selector.removeEventListener('mouseleave', onMouseLeave);
     activeHome = undefined;
     cleanup = undefined;
   };

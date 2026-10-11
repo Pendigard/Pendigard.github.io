@@ -30,10 +30,12 @@ Astro génère le site statique dans `dist/`. Aucun backend ni service externe n
 - `src/config/home.ts` : sections et réglages de l'accueil.
 - `src/sections/background/` : contenu provisoire, réglages et composition des frises Experiences et Education.
 - `src/sections/projects/` : neuf projets, tags filtrables, destinations et réglages propres à Projects.
+- `src/sections/profile/` : textes et réglages éditables des quatre slides de Profile.
 - Les sous-titres Experiences et Education restent en place pendant les slides de leur frise et accompagnent la transition vers la frise suivante.
 - `src/scripts/` : navigation, séquence d'ouverture et transitions.
 - `src/styles/` : styles partagés et styles de l'accueil.
 - `src/assets/images/home/` : photos retenues et optimisées par Astro.
+- `src/assets/images/profile/` : portrait retenu pour Profile et optimisé par Astro.
 - `img/homepage/` : banque de photographies d'origine.
 - `refs/` : références visuelles et maquettes, à consulter selon `AGENTS.md`.
 
@@ -43,4 +45,6 @@ L'accueil propose l'écriture progressive, une démonstration de la sélection, 
 
 `/projects/` répartit les neuf projets selon leur hauteur mesurée et propose cinq tags de `src/sections/projects/content.ts` comme filtres. Chaque fiche garde son contexte, ses compétences, ses technologies et sa destination dans ce fichier. Les projets sans lien vers l'ensemble du travail ouvrent une sous-section interne à droite ; les autres ouvrent la ressource indiquée sur leur fiche. Les descriptions reposent sur la liste fournie par Célian ; les dépôts, le site et la prépublication liés ont été contrôlés, mais les contributions et résultats déclarés n'ont pas tous été vérifiés indépendamment. `src/config/sections.ts` contient les valeurs communes de vitesse d'écriture, de tracé, de transition et de geste. Dans `src/sections/projects/settings.ts`, `projectOverrides` remplace ponctuellement ces valeurs ; les autres réglages Projects concernent l'écriture de ses zones, le sélecteur, les gestes tactiles, la mise en page et les tailles de texte. La priorité est **valeur locale explicite, puis valeur commune**. Les valeurs de mise en page et de typographie sont transmises aux styles par des variables CSS `--projects-layout-*` et `--projects-font-*`. Les utilitaires partagés pour la molette, le déplacement vertical et l'indicateur se trouvent dans `src/scripts/section-motion.ts`.
 
-`/me/` et `/photos/` sont encore des pages d'attente ; un défilement vers le bas y ramène à l'accueil.
+`/profile/` présente quatre slides : introduction et recherche, compétences, langues, puis loisirs. Les phrases en français, japonais et espagnol peuvent être remplacées progressivement par leur traduction anglaise au survol, au focus clavier ou au toucher. Les textes se modifient dans `src/sections/profile/content.ts` ; `/me/` redirige vers `/profile/`.
+
+`/photos/` est encore une page d'attente ; un défilement vers le bas y ramène à l'accueil.

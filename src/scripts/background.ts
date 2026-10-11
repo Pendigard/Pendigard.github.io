@@ -4,6 +4,7 @@ import { listenToGestures } from './gestures';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
+import { getBackgroundPosition, saveBackgroundPosition } from './horizontal-navigation';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -31,16 +32,15 @@ function initBackground() {
   });
   const sources = slides.map((_, index) => [...headingSources[index], ...eventSources[index]]);
   const lines = slides.map((slide) => slide.querySelector<HTMLElement>('.timeline-path')!);
-  slides.forEach((slide, index) => {
-    slide.inert = index !== 0;
-    slide.setAttribute('aria-hidden', String(index !== 0));
-  });
-  const indicator = document.querySelector<HTMLElement>('[data-slide-indicator]')!;
+  const indicator = document.querySelector<HTMLElement>('[data-slide-indicator][data-axis="vertical"]')!;
   const homeLink = document.querySelector<HTMLAnchorElement>('[data-home-return]')!;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const revealed = new Set<number>();
-  const arrivedHeadings = new Set<string>();
-  let current = 0;
+  const restored = getBackgroundPosition();
+  const hashSlide = location.hash ? slides.findIndex((slide) => !!slide.querySelector(`[id="${CSS.escape(location.hash.slice(1))}"]`)) : -1;
+  const initial = hashSlide >= 0 ? hashSlide : (restored?.slide ?? 0);
+  const revealed = new Set<number>(restored?.revealed || []);
+  const arrivedHeadings = new Set<string>(restored?.headings || []);
+  let current = Math.min(initial, slides.length - 1);
   let leaving = false;
   let moving = false;
   let introAbort: AbortController | undefined;
@@ -114,6 +114,12 @@ function initBackground() {
     leaving = true;
     finishSlide(current);
     homeLink.click();
+  };
+
+  const onProjectLink = (event: MouseEvent) => {
+    if (!(event.target instanceof Element) || !event.target.closest('[data-background-project]')) return;
+    finishSlide(current);
+    saveBackgroundPosition({ slide: current, revealed: [...revealed], headings: [...arrivedHeadings] });
   };
 
   const move = async (step: number) => {
@@ -197,18 +203,25 @@ function initBackground() {
   };
 
   window.addEventListener('keydown', onKeyDown);
-  showHeading(slides[0].dataset.part!);
+  slides.forEach((slide, index) => {
+    slide.classList.toggle('is-active', index === current);
+    slide.inert = index !== current;
+    slide.setAttribute('aria-hidden', String(index !== current));
+  });
+  showHeading(slides[current].dataset.part!);
   updateIndicator();
-  prepareHomeReturn();
-  if (!reducedMotion) {
-    sources[0].forEach(({ field }) => { field.textContent = ''; });
-    lines[0].style.transform = 'scaleY(0)';
+  if (restored) finishHomeReturn(); else prepareHomeReturn();
+  if (!restored && !reducedMotion) {
+    sources[current].forEach(({ field }) => { field.textContent = ''; });
+    lines[current].style.transform = 'scaleY(0)';
   }
   void (async () => {
-    await revealSlide(0);
+    await revealSlide(current);
     if (activeRoot !== root || leaving) return;
     await writeHomeReturn();
   })();
+
+  root.addEventListener('click', onProjectLink);
 
   cleanup = () => {
     introAbort?.abort();
@@ -218,6 +231,7 @@ function initBackground() {
     clearTypingCursor();
     finishHomeReturn();
     stopGestures();
+    root.removeEventListener('click', onProjectLink);
     window.removeEventListener('keydown', onKeyDown);
     activeRoot = undefined;
     cleanup = undefined;

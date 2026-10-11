@@ -23,7 +23,7 @@ const { part, entries, first, last, index } = Astro.props;
     <div class="timeline-path" aria-hidden="true"><span class="timeline-tip"></span></div>
     <div class="timeline-events" style={`--event-count:${entries.length}`}>
       {entries.map((entry) => (
-        <article class="timeline-event">
+        <article class="timeline-event" id={entry.id}>
           <p class="timeline-period" data-typewriter>{entry.period}</p>
           <div class="timeline-details">
             <h3 data-typewriter data-heading-typewriter>{entry.title}</h3>
@@ -33,6 +33,7 @@ const { part, entries, first, last, index } = Astro.props;
               </div>
             )}
             <p data-typewriter>{entry.description}</p>
+            {entry.projectIds?.length && <a class="timeline-project-link" href={`/projects/?from=${encodeURIComponent(entry.id)}`} data-background-project data-typewriter data-astro-prefetch>See projects.</a>}
           </div>
         </article>
       ))}

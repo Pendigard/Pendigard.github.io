@@ -24,7 +24,8 @@ const { project } = Astro.props as { project: Project };
       </section>
     ))}
   </main>
-  <a class="project-back" href="/projects/" data-project-back data-astro-prefetch>Back to Projects.</a>
+  <a class="project-back" href="/projects/" data-project-back data-astro-prefetch>Back to the previous section.</a>
   <SlideIndicator count={project.detail.length} />
+  <SlideIndicator count={1} axis="horizontal" />
   <script>import '../../scripts/project-detail';</script>
 </BaseLayout>

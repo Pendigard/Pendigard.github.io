@@ -16,6 +16,9 @@ export const projectSettings = {
   },
   selector: {
     stepMs: 45,
+    autoScrollIntervalMs: 3000,
+    autoScrollAfterUserMs: 6000,
+    autoScrollStepMs: 850,
     easing: sectionSettings.slideMoveEasing,
     widthMs: 260,
     wheelThreshold: projectOverrides.wheelThreshold ?? sectionSettings.wheelThreshold,

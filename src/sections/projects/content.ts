@@ -94,7 +94,7 @@ export const projects: readonly Project[] = [
     title: 'Rebjørn Wiki — A Multilingual Game Database',
     description: 'Frustrated by the lack of a reliable, centralized resource for one of my favorite game series, I started building my own. Developed a multilingual wiki backed by a structured database, gathering and cleaning information from scattered online sources. Explored game files through reverse engineering to recover missing data and make it accessible through a unified website.',
     context: 'Personal project',
-    technologies: ['Python', 'FastAPI', 'SQL'],
+    technologies: ['Python', 'FastAPI', 'SQL', 'Ghidra'],
     skills: ['Data engineering', 'Database design', 'Reverse engineering'],
     tags: ['Data Engineering', 'Software Engineering', 'Web', 'Game Development'],
     destination: { kind: 'external', href: 'https://rebjorn-wiki.com/', label: 'Live website' },

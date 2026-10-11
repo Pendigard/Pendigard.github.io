@@ -4,6 +4,7 @@ import { listenToGestures } from './gestures';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
+import { getDetailPosition, horizontalPosition, returnToPrevious, saveDetailPosition, updatePreviousLink } from './horizontal-navigation';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -16,13 +17,16 @@ function initProjectDetail() {
   activeRoot = root;
 
   const slides = [...root.querySelectorAll<HTMLElement>('[data-slide]')];
-  const indicator = document.querySelector<HTMLElement>('[data-slide-indicator]')!;
+  const indicator = document.querySelector<HTMLElement>('[data-slide-indicator][data-axis="vertical"]')!;
+  const horizontalIndicator = document.querySelector<HTMLElement>('[data-slide-indicator][data-axis="horizontal"]')!;
   const backLink = document.querySelector<HTMLAnchorElement>('[data-project-back]')!;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const sources = slides.map((slide) => [...slide.querySelectorAll<HTMLElement>('[data-typewriter]')]
     .map((field) => ({ field, value: field.textContent || '' })));
-  const revealed = new Set<number>();
-  let current = location.hash === '#context' && slides.length > 1 ? 1 : 0;
+  const detailKey = `${location.pathname}${location.search}`;
+  const restored = getDetailPosition(detailKey);
+  const revealed = new Set<number>(restored?.revealed || []);
+  let current = restored?.slide ?? (location.hash === '#context' && slides.length > 1 ? 1 : 0);
   let leaving = false;
   let moving = false;
   let abort: AbortController | undefined;
@@ -65,7 +69,8 @@ function initProjectDetail() {
     if (leaving) return;
     leaving = true;
     finishCurrent();
-    backLink.click();
+    saveDetailPosition(detailKey, { slide: current, revealed: [...revealed] });
+    returnToPrevious(backLink);
   };
   const move = async (step: number) => {
     if (moving || leaving) return;
@@ -125,12 +130,18 @@ function initProjectDetail() {
     slide.setAttribute('aria-hidden', String(index !== current));
   });
   updateIndicator();
+  updatePreviousLink(backLink);
+  const horizontal = horizontalPosition();
+  updateSlideIndicator(horizontalIndicator, horizontal.active, horizontal.count);
+  const onBackClick = (event: MouseEvent) => { event.preventDefault(); returnProjects(); };
+  backLink.addEventListener('click', onBackClick);
   prepareHomeReturn();
   window.addEventListener('keydown', onKeyDown);
   void revealCurrent();
   if (reducedMotion) void writeHomeReturn();
 
   cleanup = () => {
+    if (document.documentElement.dataset.routeDirection !== 'down') saveDetailPosition(detailKey, { slide: current, revealed: [...revealed] });
     abort?.abort();
     slideAnimations.forEach((animation) => animation.cancel());
     clearSkip();
@@ -138,6 +149,7 @@ function initProjectDetail() {
     finishHomeReturn();
     stopGestures();
     window.removeEventListener('keydown', onKeyDown);
+    backLink.removeEventListener('click', onBackClick);
     activeRoot = undefined;
     cleanup = undefined;
   };
