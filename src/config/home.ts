@@ -16,6 +16,8 @@ export const homeSettings = {
   selectionStepMs: 320,
   wheelGestureGapMs: 45,
   wheelGestureThreshold: 12,
+  wheelCooldownMs: 90,
+  wheelReleaseGapMs: 90,
   backgroundBlurPx: 13,
   grainOpacity: 0.19,
 } as const;

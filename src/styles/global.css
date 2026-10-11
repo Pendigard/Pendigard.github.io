@@ -88,6 +88,7 @@ body[data-page='home'] .home-return { display: none; }
 }
 
 .section-placeholder {
+  touch-action: none;
   min-height: 100svh;
   display: flex;
   flex-direction: column;

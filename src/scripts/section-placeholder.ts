@@ -2,6 +2,7 @@ import { sectionSettings } from '../config/sections';
 import { clearTypingCursor, wait, writeText } from './typewriter';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
+import { listenToGestures } from './gestures';
 
 let cleanup: (() => void) | undefined;
 let activeSection: HTMLElement | undefined;
@@ -19,7 +20,6 @@ function initSectionPlaceholder() {
   const abort = new AbortController();
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let leaving = false;
-  let wheelDistance = 0;
   let clearSkip = () => {};
 
   prepareHomeReturn();
@@ -40,18 +40,12 @@ function initSectionPlaceholder() {
     homeLink.click();
   };
 
-  const onWheel = (event: WheelEvent) => {
-    event.preventDefault();
-    const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * 16
-      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? event.deltaY * innerHeight
-      : event.deltaY;
-    if (delta <= 0) {
-      wheelDistance = 0;
-      return;
-    }
-    wheelDistance += delta;
-    if (wheelDistance >= sectionSettings.wheelThreshold) returnHome();
-  };
+  const stopGestures = listenToGestures({
+    actions: { down: returnHome },
+    touchRoot: section,
+    thresholdPx: sectionSettings.wheelThreshold,
+    gestureGapMs: sectionSettings.wheelGestureGapMs,
+  });
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -63,7 +57,6 @@ function initSectionPlaceholder() {
     }
   };
 
-  window.addEventListener('wheel', onWheel, { passive: false, capture: true });
   window.addEventListener('keydown', onKeyDown);
 
   if (reducedMotion) {
@@ -87,7 +80,7 @@ function initSectionPlaceholder() {
     clearSkip();
     clearTypingCursor();
     finishHomeReturn();
-    window.removeEventListener('wheel', onWheel, true);
+    stopGestures();
     window.removeEventListener('keydown', onKeyDown);
     activeSection = undefined;
     cleanup = undefined;

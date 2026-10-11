@@ -1,4 +1,5 @@
-import { animateSlidePair, updateSlideIndicator, wheelDelta } from './section-motion';
+import { animateSlidePair, updateSlideIndicator } from './section-motion';
+import { listenToGestures } from './gestures';
 import { projectSettings } from '../sections/projects/settings';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { getProjectOrigin, saveProjectOrigin } from './projects-state';
@@ -50,14 +51,6 @@ function initProjects() {
   let clearSkip = () => {};
   let moving = false;
   let leaving = false;
-  let wheelLocked = false;
-  let wheelTimer = 0;
-  let wheelAmount = 0;
-  let selectorWheelLocked = false;
-  let selectorWheelTimer = 0;
-  let selectorWheelAmount = 0;
-  let touchStart: { x: number; y: number } | undefined;
-  let selectorTouchY = 0;
   let introPending = !origin && !reducedMotion;
   const revealed = new Set(origin?.revealedProjects || []);
 
@@ -369,32 +362,20 @@ function initProjects() {
     void runDemo();
   };
 
-  const onWheel = (event: WheelEvent) => {
-    event.preventDefault();
-    const delta = wheelDelta(event);
-    if (event.target instanceof Element && event.target.closest('[data-projects-selector]')) {
-      window.clearTimeout(selectorWheelTimer);
-      selectorWheelTimer = window.setTimeout(() => { selectorWheelLocked = false; selectorWheelAmount = 0; }, Math.max(projectSettings.selector.wheelLockMinMs, projectSettings.selector.wheelGestureGapMs));
-      if (selectorWheelLocked) return;
-      selectorWheelAmount += delta;
-      if (Math.abs(selectorWheelAmount) >= projectSettings.selector.wheelThreshold) {
-        selectorWheelLocked = true;
-        void cycleCandidate(Math.sign(selectorWheelAmount));
-        selectorWheelAmount = 0;
-      }
-      return;
-    }
-    window.clearTimeout(wheelTimer);
-    window.clearTimeout(selectorWheelTimer);
-    wheelTimer = window.setTimeout(() => { wheelLocked = false; wheelAmount = 0; }, Math.max(projectSettings.wheelLockMinMs, projectSettings.wheelGestureGapMs));
-    if (wheelLocked) return;
-    wheelAmount += delta;
-    if (Math.abs(wheelAmount) < projectSettings.wheelThreshold) return;
-    wheelLocked = true;
-    const step = Math.sign(wheelAmount);
-    wheelAmount = 0;
-    void move(step);
-  };
+  const stopGestures = listenToGestures({
+    actions: { up: () => void move(-1), down: () => void move(1) },
+    zones: [{
+      element: selector,
+      actions: { up: () => void cycleCandidate(-1), down: () => void cycleCandidate(1) },
+      thresholdPx: projectSettings.selector.wheelThreshold,
+      touchThresholdPx: projectSettings.selector.touchThresholdPx,
+    }],
+    touchRoot: root,
+    thresholdPx: projectSettings.wheelThreshold,
+    gestureGapMs: projectSettings.wheelGestureGapMs,
+    cooldownMs: projectSettings.wheelLockMinMs,
+    touchThresholdPx: projectSettings.gesture.touchSlideThresholdPx,
+  });
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     if (event.target instanceof HTMLElement && event.target.isContentEditable) return;
@@ -422,23 +403,6 @@ function initProjects() {
       finishCurrent();
       saveProjectOrigin({ slug: article.dataset.projectId!, filter, slide: current, revealedProjects: [...revealed] });
     }
-  };
-  const onTouchStart = (event: TouchEvent) => {
-    const touch = event.changedTouches[0];
-    if (touch) touchStart = { x: touch.clientX, y: touch.clientY };
-  };
-  const onTouchEnd = (event: TouchEvent) => {
-    if (!touchStart || event.target instanceof Element && event.target.closest('[data-projects-selector]')) return;
-    const touch = event.changedTouches[0];
-    if (!touch) return;
-    const dy = touch.clientY - touchStart.y;
-    if (Math.abs(dy) > projectSettings.gesture.touchSlideThresholdPx && Math.abs(dy) > Math.abs(touch.clientX - touchStart.x)) void move(dy < 0 ? 1 : -1);
-    touchStart = undefined;
-  };
-  const onSelectorTouchStart = (event: TouchEvent) => { selectorTouchY = event.changedTouches[0]?.clientY || 0; };
-  const onSelectorTouchEnd = (event: TouchEvent) => {
-    const dy = (event.changedTouches[0]?.clientY || 0) - selectorTouchY;
-    if (Math.abs(dy) > projectSettings.selector.touchThresholdPx) { event.preventDefault(); void cycleCandidate(dy < 0 ? 1 : -1); }
   };
   let resizeTimer = 0;
   const onResize = () => {
@@ -475,12 +439,7 @@ function initProjects() {
   renderCandidate();
   if (origin || reducedMotion) document.documentElement.classList.remove('projects-typing');
   selector.addEventListener('click', onSelectorClick);
-  selector.addEventListener('touchstart', onSelectorTouchStart, { passive: true });
-  selector.addEventListener('touchend', onSelectorTouchEnd, { passive: false });
   root.addEventListener('click', onProjectClick);
-  root.addEventListener('touchstart', onTouchStart, { passive: true });
-  root.addEventListener('touchend', onTouchEnd, { passive: true });
-  window.addEventListener('wheel', onWheel, { passive: false, capture: true });
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('resize', onResize);
   void revealCurrent(!origin);
@@ -495,16 +454,10 @@ function initProjects() {
     clearTypingCursor();
     document.documentElement.classList.remove('projects-typing');
     finishHomeReturn();
-    window.clearTimeout(wheelTimer);
-    window.clearTimeout(selectorWheelTimer);
+    stopGestures();
     window.clearTimeout(resizeTimer);
     selector.removeEventListener('click', onSelectorClick);
-    selector.removeEventListener('touchstart', onSelectorTouchStart);
-    selector.removeEventListener('touchend', onSelectorTouchEnd);
     root.removeEventListener('click', onProjectClick);
-    root.removeEventListener('touchstart', onTouchStart);
-    root.removeEventListener('touchend', onTouchEnd);
-    window.removeEventListener('wheel', onWheel, true);
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('resize', onResize);
     activeRoot = undefined;

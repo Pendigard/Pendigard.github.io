@@ -1,5 +1,6 @@
 import { sectionSettings } from '../config/sections';
-import { animateSlidePair, updateSlideIndicator, wheelDelta } from './section-motion';
+import { animateSlidePair, updateSlideIndicator } from './section-motion';
+import { listenToGestures } from './gestures';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
@@ -42,9 +43,6 @@ function initBackground() {
   let current = 0;
   let leaving = false;
   let moving = false;
-  let wheelLocked = false;
-  let wheelTimer = 0;
-  let wheelAmount = 0;
   let introAbort: AbortController | undefined;
   let lineAnimation: Animation | undefined;
   let clearSkip = () => {};
@@ -180,22 +178,13 @@ function initBackground() {
     void revealSlide(current);
   };
 
-  const onWheel = (event: WheelEvent) => {
-    event.preventDefault();
-    window.clearTimeout(wheelTimer);
-    wheelTimer = window.setTimeout(() => {
-      wheelLocked = false;
-      wheelAmount = 0;
-    }, sectionSettings.wheelGestureGapMs);
-    if (wheelLocked) return;
-    const delta = wheelDelta(event);
-    wheelAmount += delta;
-    if (Math.abs(wheelAmount) < sectionSettings.wheelThreshold) return;
-    wheelLocked = true;
-    const step = wheelAmount > 0 ? 1 : -1;
-    wheelAmount = 0;
-    void move(step);
-  };
+  const stopGestures = listenToGestures({
+    actions: { up: () => void move(-1), down: () => void move(1) },
+    touchRoot: root,
+    thresholdPx: sectionSettings.wheelThreshold,
+    gestureGapMs: sectionSettings.wheelGestureGapMs,
+    cooldownMs: sectionSettings.wheelLockMinMs,
+  });
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -207,7 +196,6 @@ function initBackground() {
     }
   };
 
-  window.addEventListener('wheel', onWheel, { passive: false, capture: true });
   window.addEventListener('keydown', onKeyDown);
   showHeading(slides[0].dataset.part!);
   updateIndicator();
@@ -229,8 +217,7 @@ function initBackground() {
     clearSkip();
     clearTypingCursor();
     finishHomeReturn();
-    window.clearTimeout(wheelTimer);
-    window.removeEventListener('wheel', onWheel, true);
+    stopGestures();
     window.removeEventListener('keydown', onKeyDown);
     activeRoot = undefined;
     cleanup = undefined;

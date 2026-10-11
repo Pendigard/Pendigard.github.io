@@ -1,4 +1,5 @@
 .background-section {
+  touch-action: none;
   position: relative;
   height: 100svh;
   min-height: 31rem;

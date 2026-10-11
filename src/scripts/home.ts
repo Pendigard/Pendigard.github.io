@@ -1,6 +1,7 @@
 import { homeSettings, sections } from '../config/home';
 import { clearTypingCursor, wait, writeText } from './typewriter';
 import { setSkippableAnimation } from './skippable';
+import { listenToGestures } from './gestures';
 
 type HomeWindow = Window & {
   __portfolioHomePhoto?: { index: number; url: string };
@@ -39,7 +40,6 @@ function initHome() {
   let introRunning = !reducedMotion;
   let selectionAnimation: Animation | undefined;
   let clearSkip = () => {};
-  let lastWheelAt = earlyWheelAt ?? -Infinity;
 
   const selectedLink = (index: number) => {
     const link = document.createElement('a');
@@ -150,19 +150,16 @@ function initHome() {
     void moveTo(next, homeSettings.selectionStepMs, true, direction);
   };
 
-  const onWheel = (event: WheelEvent) => {
-    // Keep one continuous wheel or trackpad gesture on a single selection.
-    event.preventDefault();
-    const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * 16
-      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? event.deltaY * window.innerHeight
-      : event.deltaY;
-    if (Math.abs(delta) < homeSettings.wheelGestureThreshold) return;
-
-    const now = performance.now();
-    const gap = now - lastWheelAt;
-    lastWheelAt = now;
-    if (gap >= homeSettings.wheelGestureGapMs) userMove(Math.sign(delta));
-  };
+  const stopGestures = listenToGestures({
+    actions: { up: () => userMove(-1), down: () => userMove(1) },
+    touchRoot: home,
+    thresholdPx: homeSettings.wheelGestureThreshold,
+    gestureGapMs: homeSettings.wheelGestureGapMs,
+    cooldownMs: homeSettings.wheelCooldownMs,
+    releaseGapMs: homeSettings.wheelReleaseGapMs,
+    initialWheelAt: earlyWheelAt,
+    accumulate: false,
+  });
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -184,7 +181,6 @@ function initHome() {
     if (target) finishIntro();
   };
 
-  window.addEventListener('wheel', onWheel, { passive: false, capture: true });
   window.addEventListener('keydown', onKeyDown);
   home.addEventListener('click', onShortcutClick);
   updateShortcuts();
@@ -215,7 +211,7 @@ function initHome() {
     clearTypingCursor();
     selectionAnimation?.cancel();
     clearSkip();
-    window.removeEventListener('wheel', onWheel, true);
+    stopGestures();
     window.removeEventListener('keydown', onKeyDown);
     home.removeEventListener('click', onShortcutClick);
     activeHome = undefined;

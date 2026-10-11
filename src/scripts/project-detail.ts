@@ -1,5 +1,6 @@
 import { projectSettings } from '../sections/projects/settings';
-import { animateSlidePair, updateSlideIndicator, wheelDelta } from './section-motion';
+import { animateSlidePair, updateSlideIndicator } from './section-motion';
+import { listenToGestures } from './gestures';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
@@ -24,11 +25,6 @@ function initProjectDetail() {
   let current = location.hash === '#context' && slides.length > 1 ? 1 : 0;
   let leaving = false;
   let moving = false;
-  let wheelLocked = false;
-  let wheelTimer = 0;
-  let wheelAmount = 0;
-  let horizontalWheelAmount = 0;
-  let touchStart: { x: number; y: number } | undefined;
   let abort: AbortController | undefined;
   let clearSkip = () => {};
   let slideAnimations: Animation[] = [];
@@ -101,51 +97,26 @@ function initProjectDetail() {
     moving = false;
     void revealCurrent();
   };
-  const onWheel = (event: WheelEvent) => {
-    event.preventDefault();
-    window.clearTimeout(wheelTimer);
-    wheelTimer = window.setTimeout(() => { wheelLocked = false; wheelAmount = 0; horizontalWheelAmount = 0; }, Math.max(projectSettings.wheelLockMinMs, projectSettings.wheelGestureGapMs));
-    if (wheelLocked) return;
-    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
-      horizontalWheelAmount = Math.min(0, horizontalWheelAmount + (
-        wheelDelta(event, 'x')));
-      if (horizontalWheelAmount <= -projectSettings.gesture.horizontalReturnThresholdPx) {
-        wheelLocked = true;
-        returnProjects();
-      }
-      return;
-    }
-    const delta = wheelDelta(event);
-    wheelAmount += delta;
-    if (Math.abs(wheelAmount) < projectSettings.wheelThreshold) return;
-    wheelLocked = true;
-    const step = Math.sign(wheelAmount);
-    wheelAmount = 0;
-    void move(step);
-  };
+  const stopGestures = listenToGestures({
+    actions: { up: () => void move(-1), down: () => void move(1), left: returnProjects },
+    touchRoot: root,
+    thresholdPx: projectSettings.wheelThreshold,
+    gestureGapMs: projectSettings.wheelGestureGapMs,
+    cooldownMs: projectSettings.wheelLockMinMs,
+    touchThresholdPx: projectSettings.gesture.touchSlideThresholdPx,
+    // A sideways impulse should be deliberate before leaving the detail route.
+    horizontalThresholdPx: projectSettings.gesture.horizontalReturnThresholdPx,
+    touchHorizontalThresholdPx: projectSettings.gesture.touchHorizontalReturnThresholdPx,
+  });
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     if (event.target instanceof HTMLElement &&
       (event.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(event.target.tagName))) return;
-    if (event.key === 'ArrowRight') { event.preventDefault(); returnProjects(); }
+    if (event.key === 'ArrowLeft') { event.preventDefault(); returnProjects(); }
     if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
       void move(event.key === 'ArrowDown' ? 1 : -1);
     }
-  };
-  const onTouchStart = (event: TouchEvent) => {
-    const touch = event.changedTouches[0];
-    if (touch) touchStart = { x: touch.clientX, y: touch.clientY };
-  };
-  const onTouchEnd = (event: TouchEvent) => {
-    if (!touchStart) return;
-    const touch = event.changedTouches[0];
-    if (!touch) return;
-    const dx = touch.clientX - touchStart.x;
-    const dy = touch.clientY - touchStart.y;
-    if (dx > projectSettings.gesture.touchHorizontalReturnThresholdPx && Math.abs(dx) > Math.abs(dy)) returnProjects();
-    else if (Math.abs(dy) > projectSettings.gesture.touchSlideThresholdPx && Math.abs(dy) > Math.abs(dx)) void move(dy < 0 ? 1 : -1);
-    touchStart = undefined;
   };
 
   slides.forEach((slide, index) => {
@@ -155,9 +126,6 @@ function initProjectDetail() {
   });
   updateIndicator();
   prepareHomeReturn();
-  root.addEventListener('touchstart', onTouchStart, { passive: true });
-  root.addEventListener('touchend', onTouchEnd, { passive: true });
-  window.addEventListener('wheel', onWheel, { passive: false, capture: true });
   window.addEventListener('keydown', onKeyDown);
   void revealCurrent();
   if (reducedMotion) void writeHomeReturn();
@@ -168,10 +136,7 @@ function initProjectDetail() {
     clearSkip();
     clearTypingCursor();
     finishHomeReturn();
-    window.clearTimeout(wheelTimer);
-    root.removeEventListener('touchstart', onTouchStart);
-    root.removeEventListener('touchend', onTouchEnd);
-    window.removeEventListener('wheel', onWheel, true);
+    stopGestures();
     window.removeEventListener('keydown', onKeyDown);
     activeRoot = undefined;
     cleanup = undefined;

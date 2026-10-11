@@ -1,10 +1,3 @@
-export function wheelDelta(event: WheelEvent, axis: 'x' | 'y' = 'y') {
-  const value = axis === 'x' ? event.deltaX : event.deltaY;
-  const pageSize = axis === 'x' ? innerWidth : innerHeight;
-  return event.deltaMode === WheelEvent.DOM_DELTA_LINE ? value * 16
-    : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? value * pageSize : value;
-}
-
 export function animateSlidePair(
   outgoing: HTMLElement,
   incoming: HTMLElement,

@@ -114,7 +114,7 @@ export const projects: readonly Project[] = [
   {
     slug: 'tetris', priority: 8,
     title: 'Tetris — Customizable Java Game',
-    description: 'Built a Java Tetris game with single-player and competitive two-player modes. Designed a theming system for graphics and audio while keeping game logic and presentation modular.',
+    description: 'Recreated Tetris in Java with both single-player and competitive two-player modes. Designed an extensible theming system that allows players to customize graphics and audio, applying object-oriented design principles to keep the game logic and presentation modular.',
     context: 'Bachelor course project',
     technologies: ['Java', 'Swing', 'AWT'],
     skills: ['Object-oriented design', 'GUI development', 'Extensibility'],
@@ -125,7 +125,7 @@ export const projects: readonly Project[] = [
   {
     slug: 'dragon-quest-monsters', priority: 9,
     title: 'Dragon Quest Monsters — 2D RPG in C++',
-    description: 'Built a 2D monster-catching RPG with tile-based exploration, turn-based combat, collection, and team management. Implemented map loading, save files, and interactive menus in C++ and SDL2.',
+    description: 'Built a 2D monster-catching RPG in C++ using SDL2, inspired by the Dragon Quest Monsters series. Developed core gameplay systems including tile-based world exploration, turn-based combat, monster collection, and team management. Implemented map loading, save files, and interactive menus, combining game logic with graphics and resource management.',
     context: 'Bachelor course project',
     technologies: ['C++', 'SDL2', 'JSON'],
     skills: ['Game development', 'Graphics programming', 'Serialization'],
