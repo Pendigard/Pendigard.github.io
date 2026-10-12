@@ -7,6 +7,6 @@ export const sectionSettings = {
   wheelLockMinMs: 180,
   slideMoveMs: 560,
   slideMoveEasing: 'cubic-bezier(.22, .7, .16, 1)',
-  lineDrawMs: 425,
+  lineDrawMs: 900,
   lineDrawEasing: 'ease-in-out',
 };

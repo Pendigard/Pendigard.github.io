@@ -1,0 +1,34 @@
+---
+import { Image } from 'astro:assets';
+import type { GallerySlide } from './content';
+
+interface Props { slide: GallerySlide; index: number }
+const { slide, index } = Astro.props;
+---
+<section class:list={['photos-slide', { 'is-active': index === 0 }]} data-photos-slide data-template={slide.template} data-mirrored={String(slide.mirrored)} aria-label={slide.label}>
+  <div class="photos-composition">
+    {slide.slots.map((slot) => slot.kind === 'photo' ? (
+      <figure class="photos-slot photos-photo" data-slot={slot.id} data-photo-id={slot.photo.id} data-caption-position={slot.captionPosition}>
+        <div class="photos-image">
+          <Image src={slot.photo.image} alt={slot.photo.alt} widths={[360, 720, 1200, 1800]}
+            sizes={slide.template === 'full-bleed' ? '100vw' : '(max-width: 700px) 85vw, 48vw'}
+            format="webp" quality={78} loading={index === 0 ? 'eager' : 'lazy'} decoding="async" />
+        </div>
+        {slot.caption && Object.values(slot.caption).some(Boolean) && (
+          <figcaption>
+            {slot.caption.title && <span class="photos-caption-title" data-typewriter>{slot.caption.title}</span>}
+            {[slot.caption.date, slot.caption.camera, slot.caption.place].filter(Boolean).length > 0 && (
+              <span class="photos-caption-meta" data-typewriter>{[slot.caption.date, slot.caption.camera, slot.caption.place].filter(Boolean).join(' · ')}</span>
+            )}
+          </figcaption>
+        )}
+      </figure>
+    ) : slot.kind === 'text' ? (
+      <div class="photos-slot photos-text" data-slot={slot.id}>
+        {slot.eyebrow && <span class="photos-text-eyebrow" data-typewriter>{slot.eyebrow}</span>}
+        {slot.heading && <h2 data-typewriter>{slot.heading}</h2>}
+        <p data-typewriter>{slot.body}</p>
+      </div>
+    ) : <div class="photos-slot photos-empty" data-slot={slot.id} aria-hidden="true"></div>)}
+  </div>
+</section>

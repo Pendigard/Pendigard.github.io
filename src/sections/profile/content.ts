@@ -28,7 +28,7 @@ export const skillGroups = [
 export const languages = [
   { name: 'French', level: 'Native', code: 'fr', original: 'Je parle français depuis ma tendre enfance.', translation: 'I have spoken French since early childhood.' },
   { name: 'English', level: 'C1', code: 'en', original: 'I speak and understand English at an academic level.' },
-  { name: 'Japanese', level: 'B1', code: 'ja', original: '3年前に独学で日本語を勉強し始めました。今も学び続けています。', translation: 'I started learning Japanese by myself three years ago and am still learning.' },
+  { name: 'Japanese', level: 'B1', code: 'ja', original: '3年前に独学で日本語の勉強を始め、今も続けています。', translation: 'I started learning Japanese on my own three years ago and have kept at it ever since.' },
   { name: 'Spanish', level: 'B1', code: 'es', original: 'Estudié español durante la secundaria y el bachillerato.', translation: 'I studied Spanish throughout middle school and high school.' },
 ] as const;
 

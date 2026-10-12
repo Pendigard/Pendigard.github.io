@@ -20,8 +20,10 @@ export function createAutoSelection({ intervalMs, afterUserMs, enabled, move, ca
     if (!enabled || stopped || document.hidden || hovered) return;
     timer = window.setTimeout(() => {
       running = true;
-      void Promise.resolve(move()).catch(() => {}).finally(() => { running = false; });
-      schedule(intervalMs);
+      void Promise.resolve().then(move).catch(() => {}).finally(() => {
+        running = false;
+        schedule(Math.max(intervalMs, lastUserAt + afterUserMs - performance.now()));
+      });
     }, Math.max(0, delayMs));
   };
 

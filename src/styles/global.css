@@ -25,8 +25,10 @@ body {
   right: clamp(1.35rem, 4vw, 4.2rem);
   bottom: clamp(1.25rem, 4vw, 3.6rem);
   color: inherit;
-  font-size: clamp(.95rem, 1.15vw, 1.18rem);
-  font-style: italic;
+  font-family: 'Times New Roman', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -.057em;
+  font-size: clamp(1.05rem, 1.2vw, 1.25rem);
   text-decoration: none;
   white-space: nowrap;
 }

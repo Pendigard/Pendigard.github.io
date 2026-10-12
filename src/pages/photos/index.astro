@@ -1,4 +1,20 @@
 ---
-import SectionPlaceholder from '../../components/SectionPlaceholder.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SlideIndicator from '../../components/SlideIndicator.astro';
+import GallerySlide from '../../sections/photos/GallerySlide.astro';
+import { gallerySlides } from '../../sections/photos/content';
+import '../../styles/photos.css';
 ---
-<SectionPlaceholder name="My Photos" />
+<BaseLayout title="My Photos — Célian" description="A selection of photographs.">
+  <script slot="head" is:inline>
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('photos-typing');
+      window.setTimeout(() => document.documentElement.classList.remove('photos-typing'), 5000);
+    }
+  </script>
+  <main class="photos-section" data-photos>
+    {gallerySlides.map((slide, index) => <GallerySlide slide={slide} index={index} />)}
+  </main>
+  <SlideIndicator count={gallerySlides.length} />
+  <script>import '../../scripts/photos';</script>
+</BaseLayout>

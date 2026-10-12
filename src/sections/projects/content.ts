@@ -34,7 +34,7 @@ export const projects: readonly Project[] = [
     technologies: ['Python', 'Scala', 'Joern', 'PyTorch'],
     skills: ['Mechanistic interpretability', 'Static analysis', 'Causal interventions'],
     tags: ['Machine Learning', 'NLP', 'Interpretability', 'Data Engineering', 'Code Analysis', 'SAE'],
-    destination: { kind: 'internal', slug: 'variable-roles', label: 'Project overview' },
+    destination: { kind: 'external', href: '#', label: 'Project overview' },
     secondaryLinks: [{ label: 'Variable extractor · GitHub', href: 'https://github.com/Pendigard/sajaniemi-variable-extractor' }],
     detail: [
       { heading: 'Variable roles.', body: 'Inspired by the psychology of programming, this research uses Sajaniemi’s variable roles to ask what code language models represent about the variables in the programs they process.' },
@@ -71,7 +71,7 @@ export const projects: readonly Project[] = [
     technologies: ['Python', 'PyTorch'],
     skills: ['Knowledge graphs', 'Error analysis', 'Data augmentation'],
     tags: ['Machine Learning', 'NLP', 'Knowledge Graphs'],
-    destination: { kind: 'internal', slug: 'entity-typing', label: 'Project overview' },
+    destination: { kind: 'external', href: '#', label: 'Project overview' },
     secondaryLinks: [],
     detail: [
       { heading: 'Entity typing.', body: 'This M1 research project extended SSET, a language-model-based approach to assigning types to knowledge graph entities.' },

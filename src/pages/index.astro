@@ -96,17 +96,6 @@ const backgrounds = await Promise.all(photographs.map(async (photo) => {
       <output class="sr-only" aria-live="polite" data-selection-announcement></output>
     </div>
 
-    <div class="home-footer">
-      <p class="scroll-hint">Scroll to explore. Select to enter.</p>
-      <!-- <nav aria-label="Portfolio sections" class="section-shortcuts">
-        {sections.map((section, index) => (
-          <a href={section.href} data-section-shortcut data-selected={String(index === homeSettings.defaultSection)} aria-current={index === homeSettings.defaultSection ? 'true' : undefined} data-astro-prefetch>
-            <span class="shortcut-number">{String(index + 1).padStart(2, '0')}</span>
-            <span>{section.label}</span>
-          </a>
-        ))}
-      </nav> -->
-    </div>
   </main>
 
   <script>

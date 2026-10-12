@@ -1,0 +1,129 @@
+.photos-section {
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  background: #f5f2e9;
+}
+.photos-section::after {
+  content: '';
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: none;
+  opacity: .11;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
+}
+.photos-slide { position: relative; height: 100svh; background: #f5f2e9; overflow: hidden; }
+.photos-composition {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  gap: clamp(.9rem, 3vw, 2.6rem);
+  padding: clamp(2.6rem, 5.8vh, 4rem) clamp(3rem, 6vw, 7rem) clamp(5.2rem, 11vh, 7rem);
+}
+.photos-slide[data-mirrored='true'] .photos-composition { transform: scaleX(-1); }
+.photos-slide[data-mirrored='true'] .photos-slot { transform: scaleX(-1); }
+.photos-slot { min-width: 0; min-height: 0; margin: 0; }
+.photos-photo { display: flex; flex-direction: column; }
+.photos-image { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.photos-image img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.photos-photo figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .12rem .65rem;
+  flex: none;
+  font-size: clamp(.73rem, 1.05vw, 1rem);
+  line-height: 1.18;
+  text-align: left;
+}
+.photos-photo[data-caption-position='above'] figcaption { order: -1; padding-bottom: .32rem; }
+.photos-photo[data-caption-position='below'] figcaption { padding-top: .32rem; }
+.photos-caption-meta { opacity: .67; }
+.photos-text { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+.photos-text-eyebrow { font-size: clamp(.78rem, 1vw, 1rem); }
+.photos-text h2 { margin: .2em 0 .25em; font-size: clamp(1.8rem, 4vw, 4rem); font-weight: 400; line-height: 1; }
+.photos-text p { max-width: 34ch; margin: 0; font-size: clamp(.82rem, 1.4vw, 1.35rem); line-height: 1.25; }
+
+/* 1: single image reaches the slide edge; contain keeps every pixel visible. */
+.photos-slide[data-template='full-bleed'] .photos-composition { display: block; padding: 0; background: #1c1b19; }
+.photos-slide[data-template='full-bleed'] .photos-slot { width: 100%; height: 100%; }
+.photos-slide[data-template='full-bleed'] .photos-image { width: 100%; height: 100%; }
+.photos-slide[data-template='full-bleed'] .photos-image img { object-fit: cover; object-position: center; }
+.photos-slide[data-template='full-bleed'] figcaption {
+  position: absolute; left: clamp(1.4rem, 4vw, 4rem); bottom: clamp(1.3rem, 4vw, 3.6rem);
+  z-index: 1; max-width: 45%; padding: .2rem .35rem; color: white;
+  background: rgba(0, 0, 0, .4); text-shadow: 0 1px 3px #111;
+}
+
+/* 2: two separated portraits with captions on opposite edges. */
+.photos-slide[data-template='portrait-pair'] .photos-composition { grid-template-columns: minmax(0, .9fr) minmax(0, .42fr) minmax(0, .9fr); }
+.photos-slide[data-template='portrait-pair'] [data-slot='left'] { grid-column: 1; height: 83%; align-self: start; }
+.photos-slide[data-template='portrait-pair'] [data-slot='right'] { grid-column: 3; height: 83%; align-self: end; position: relative; top: 3rem; }
+
+/* 3: opposite corners deliberately leave the other two corners empty. */
+.photos-slide[data-template='diagonal'] .photos-composition,
+.photos-slide[data-template='offset-pair'] .photos-composition { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.photos-slide[data-template='diagonal'] [data-slot='upper'] { grid-area: 1 / 1; }
+.photos-slide[data-template='diagonal'] [data-slot='lower'] { grid-area: 2 / 2; position: relative; top: 3rem; }
+.photos-slide[data-template='offset-pair'] [data-slot='upper'] { grid-area: 1 / 2; }
+.photos-slide[data-template='offset-pair'] [data-slot='lower'] { grid-area: 2 / 1; }
+
+/* 4: a tall picture against a pair of smaller horizontal views. */
+.photos-slide[data-template='portrait-stack'] .photos-composition { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.photos-slide[data-template='portrait-stack'] [data-slot='portrait'] { grid-area: 1 / 1 / 3 / 2; }
+.photos-slide[data-template='portrait-stack'] [data-slot='upper'] { grid-area: 1 / 2; }
+.photos-slide[data-template='portrait-stack'] [data-slot='lower'] { grid-area: 2 / 2; }
+
+/* 5: four views in two aligned columns. */
+.photos-slide[data-template='four-up'] .photos-composition { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.photos-slide[data-template='four-up'] [data-slot='upperLeft'] { grid-area: 1 / 1; }
+.photos-slide[data-template='four-up'] [data-slot='upperRight'] { grid-area: 1 / 2; }
+.photos-slide[data-template='four-up'] [data-slot='lowerLeft'] { grid-area: 2 / 1; }
+.photos-slide[data-template='four-up'] [data-slot='lowerRight'] { grid-area: 2 / 2; }
+
+/* 7: the landscape sits low while the portrait extends upward. */
+.photos-slide[data-template='landscape-portrait'] .photos-composition { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); }
+.photos-slide[data-template='landscape-portrait'] [data-slot='landscape'] { grid-column: 1; height: 63%; align-self: end; }
+.photos-slide[data-template='landscape-portrait'] [data-slot='portrait'] { grid-column: 2; height: 94%; align-self: start; }
+
+/* 8: a long central portrait between two shorter columns. */
+.photos-slide[data-template='triptych'] .photos-composition { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(.45rem, 1.4vw, 1.4rem); }
+.photos-slide[data-template='triptych'] [data-slot='left'] { grid-column: 1; height: 78%; align-self: center; }
+.photos-slide[data-template='triptych'] [data-slot='centre'] { grid-column: 2; height: 100%; }
+.photos-slide[data-template='triptych'] [data-slot='right'] { grid-column: 3; height: 78%; align-self: center; }
+
+.photos-section.is-enhanced { height: 100svh; overflow: hidden; touch-action: none; }
+.photos-section.is-enhanced .photos-slide { position: absolute; inset: 0; display: none; }
+.photos-section.is-enhanced .photos-slide.is-active,
+.photos-section.is-enhanced .photos-slide.is-entering { display: block; }
+html.photos-typing .photos-slide:first-child [data-typewriter] { visibility: hidden; }
+
+body:has(.photos-section) .home-return { transition: color 140ms ease, background-color 140ms ease, opacity 140ms ease; }
+body:has(.photos-section) .home-return.photos-on-image {
+  color: rgba(255,255,255,.82); background: rgba(0,0,0,.46);
+  padding: .17rem .4rem; margin: -.17rem -.4rem;
+  text-shadow: 0 1px 4px rgba(0,0,0,.9);
+}
+body:has(.photos-section) .home-return.photos-on-image:hover,
+body:has(.photos-section) .home-return.photos-on-image:focus-visible { color: white; background: rgba(0,0,0,.68); }
+body:has(.photos-section) .home-return:not(.photos-on-image) { color: #24211e; }
+body:has(.photos-section) .home-return:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+
+@media (max-width: 700px) {
+  .photos-composition { gap: .65rem; padding: 2.2rem 1.8rem 4.4rem; }
+  .photos-slide[data-template='portrait-pair'] .photos-composition { grid-template-columns: minmax(0, 1fr) .09fr minmax(0, 1fr); }
+  .photos-slide[data-template='portrait-pair'] [data-slot='right'],
+  .photos-slide[data-template='diagonal'] [data-slot='lower'] { top: 0; }
+  .photos-photo figcaption { display: block; font-size: clamp(.66rem, 2.8vw, .82rem); }
+  .photos-caption-meta { display: block; }
+  .photos-slide[data-template='triptych'] .photos-composition { gap: .22rem; padding-inline: 1.2rem; }
+  .photos-slide[data-template='full-bleed'] figcaption { max-width: 55%; }
+}
+@media (max-height: 650px) {
+  .photos-composition { padding-top: 1.1rem; padding-bottom: 3.7rem; }
+  .photos-photo figcaption { font-size: .7rem; }
+  .photos-slide[data-template='full-bleed'] .photos-composition { padding: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body:has(.photos-section) .home-return { transition: none; }
+}

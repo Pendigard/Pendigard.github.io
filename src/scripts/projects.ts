@@ -313,7 +313,9 @@ function initProjects() {
     if (next < 0) { returnHome(); return; }
     if (next >= slides.length) return;
     moving = true;
+    const interruptedIntro = introPending;
     finishCurrent();
+    if (interruptedIntro) autoSelection.start();
     const outgoing = slides[current];
     const incoming = slides[next];
     prepareSlide(next);
@@ -396,7 +398,6 @@ function initProjects() {
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     if (event.target instanceof HTMLElement && event.target.isContentEditable) return;
-    if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.key)) autoSelection.userActivity();
     if (selector.contains(event.target as Node) && ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.key)) {
       event.preventDefault();
       void cycleCandidate(event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1);
@@ -471,8 +472,8 @@ function initProjects() {
   selector.addEventListener('click', onSelectorClick);
   const onWheel = () => autoSelection.userActivity();
   const onTouchStart = () => autoSelection.userActivity();
-  root.addEventListener('wheel', onWheel, { capture: true, passive: true });
-  root.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
+  selector.addEventListener('wheel', onWheel, { capture: true, passive: true });
+  selector.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
   const onMouseEnter = () => {
     autoSelection.pause();
     if (demoAbort) {
@@ -509,8 +510,8 @@ function initProjects() {
     stopGestures();
     window.clearTimeout(resizeTimer);
     selector.removeEventListener('click', onSelectorClick);
-    root.removeEventListener('wheel', onWheel, true);
-    root.removeEventListener('touchstart', onTouchStart, true);
+    selector.removeEventListener('wheel', onWheel, true);
+    selector.removeEventListener('touchstart', onTouchStart, true);
     selector.removeEventListener('mouseenter', onMouseEnter);
     selector.removeEventListener('mouseleave', onMouseLeave);
     backLink.removeEventListener('click', onBackClick);
