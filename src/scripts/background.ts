@@ -1,5 +1,6 @@
 import { sectionSettings } from '../config/sections';
-import { animateSlidePair, updateSlideIndicator } from './section-motion';
+import { backgroundSettings } from '../sections/background/settings';
+import { animateSlidePair, bindSlideIndicator, updateSlideIndicator } from './section-motion';
 import { listenToGestures } from './gestures';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
@@ -86,7 +87,7 @@ function initBackground() {
     const first = slides[index].dataset.first === 'true';
     lineAnimation = lines[index].animate(
       [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }],
-      { duration: sectionSettings.lineDrawMs, easing: sectionSettings.lineDrawEasing, fill: 'forwards' },
+      { duration: backgroundSettings.lineDrawMs, easing: backgroundSettings.lineDrawEasing, fill: 'forwards' },
     );
     // The first path grows toward its arrow; continuations grow toward their base.
     lines[index].style.transformOrigin = first ? 'center bottom' : 'center top';
@@ -122,11 +123,9 @@ function initBackground() {
     saveBackgroundPosition({ slide: current, revealed: [...revealed], headings: [...arrivedHeadings] });
   };
 
-  const move = async (step: number) => {
-    if (moving || leaving) return;
-    const next = current + step;
-    if (next < 0) { returnHome(); return; }
-    if (next >= slides.length) return;
+  const moveTo = async (next: number) => {
+    if (moving || leaving || next === current || next < 0 || next >= slides.length) return;
+    const step = Math.sign(next - current);
     moving = true;
     finishSlide(current);
     const outgoing = slides[current];
@@ -184,6 +183,12 @@ function initBackground() {
     void revealSlide(current);
   };
 
+  const move = (step: number) => {
+    if (current + step < 0) { if (!moving) returnHome(); return; }
+    void moveTo(current + step);
+  };
+  const stopIndicator = bindSlideIndicator(indicator, (index) => void moveTo(index));
+
   const stopGestures = listenToGestures({
     actions: { up: () => void move(-1), down: () => void move(1) },
     touchRoot: root,
@@ -231,6 +236,7 @@ function initBackground() {
     clearTypingCursor();
     finishHomeReturn();
     stopGestures();
+    stopIndicator();
     root.removeEventListener('click', onProjectLink);
     window.removeEventListener('keydown', onKeyDown);
     activeRoot = undefined;

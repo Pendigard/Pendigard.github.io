@@ -8,6 +8,12 @@ export const introduction = {
   interests: ['Model Interpretability', 'Natural Language Processing', 'Multilingual Models', 'Machine Translation'],
 } as const;
 
+export const contacts = [
+  { label: 'celvas@me.com', href: 'mailto:celvas@me.com' },
+  { label: 'GitHub', href: 'https://github.com/Pendigard' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/c%C3%A9lian-vasson/' },
+] as const;
+
 export const skillGroups = [
   { title: 'Programming Languages', lines: [{ items: 'Python · C/C++ · Java · JavaScript · OCaml · Prolog' }] },
   { title: 'Machine Learning & Deep Learning', lines: [
@@ -33,6 +39,6 @@ export const languages = [
 ] as const;
 
 export const hobbies = {
-  interests: ['Photography', 'Programming', 'Travelling', 'Dragon Quest', 'Learning Languages'],
-  sports: ['Basketball', 'Karate', 'Boxing', 'Bouldering', 'Skiing'],
+  interests: ['Photography', 'Sports', 'Dragon Quest', 'Learning Languages'],
+  sports: ['Basketball', 'Bouldering', 'Karate', 'Boxing', 'Skiing'],
 } as const;

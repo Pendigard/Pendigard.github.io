@@ -1,10 +1,10 @@
 import { projectSettings } from '../sections/projects/settings';
-import { animateSlidePair, updateSlideIndicator } from './section-motion';
+import { animateSlidePair, bindSlideIndicator, updateSlideIndicator } from './section-motion';
 import { listenToGestures } from './gestures';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
-import { getDetailPosition, horizontalPosition, returnToPrevious, saveDetailPosition, updatePreviousLink } from './horizontal-navigation';
+import { getDetailPosition, horizontalPosition, openHorizontalView, returnToPrevious, saveDetailPosition, updatePreviousLink } from './horizontal-navigation';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -72,10 +72,9 @@ function initProjectDetail() {
     saveDetailPosition(detailKey, { slide: current, revealed: [...revealed] });
     returnToPrevious(backLink);
   };
-  const move = async (step: number) => {
-    if (moving || leaving) return;
-    const next = current + step;
-    if (next < 0 || next >= slides.length) return;
+  const moveTo = async (next: number) => {
+    if (moving || leaving || next === current || next < 0 || next >= slides.length) return;
+    const step = Math.sign(next - current);
     moving = true;
     finishCurrent();
     const outgoing = slides[current];
@@ -102,6 +101,8 @@ function initProjectDetail() {
     moving = false;
     void revealCurrent();
   };
+  const move = (step: number) => void moveTo(current + step);
+  const stopIndicator = bindSlideIndicator(indicator, (index) => void moveTo(index));
   const stopGestures = listenToGestures({
     actions: { up: () => void move(-1), down: () => void move(1), left: returnProjects },
     touchRoot: root,
@@ -133,6 +134,14 @@ function initProjectDetail() {
   updatePreviousLink(backLink);
   const horizontal = horizontalPosition();
   updateSlideIndicator(horizontalIndicator, horizontal.active, horizontal.count);
+  const stopHorizontalIndicator = bindSlideIndicator(horizontalIndicator, (index) => {
+    if (leaving || index >= horizontal.active) return;
+    if (index === horizontal.active - 1) { returnProjects(); return; }
+    leaving = true;
+    finishCurrent();
+    saveDetailPosition(detailKey, { slide: current, revealed: [...revealed] });
+    openHorizontalView(index, backLink);
+  });
   const onBackClick = (event: MouseEvent) => { event.preventDefault(); returnProjects(); };
   backLink.addEventListener('click', onBackClick);
   prepareHomeReturn();
@@ -148,6 +157,8 @@ function initProjectDetail() {
     clearTypingCursor();
     finishHomeReturn();
     stopGestures();
+    stopIndicator();
+    stopHorizontalIndicator();
     window.removeEventListener('keydown', onKeyDown);
     backLink.removeEventListener('click', onBackClick);
     activeRoot = undefined;

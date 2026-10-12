@@ -59,7 +59,7 @@ export function writeHomeReturn(): Promise<void> {
   };
   active = writing;
   writing.promise = (async () => {
-    await writeText(link, label, sectionSettings.characterMs, abort.signal);
+    await writeText(link, label, sectionSettings.homeReturnCharacterMs, abort.signal);
     if (active === writing) finishHomeReturn();
   })();
   return writing.promise;

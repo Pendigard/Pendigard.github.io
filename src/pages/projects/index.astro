@@ -29,11 +29,15 @@ import '../../styles/projects.css';
         {orderedProjects.map((project) => (
           <article class="project-entry" data-project-id={project.slug} data-tags={JSON.stringify(project.tags)}>
             <div class="project-rule" aria-hidden="true"></div>
-            <h2><a href={projectHref(project)} aria-label={`${project.title} — ${project.destination.label}`} data-project-main={project.slug} data-typewriter>{project.title}</a></h2>
-            <div class="project-secondary-links">
-              <span class="project-destination-label" data-typewriter>{project.destination.label}</span>
-              {project.secondaryLinks.map((link) => <a href={link.href} data-typewriter>{link.label}</a>)}
-            </div>
+            <h2>{project.destination ? (
+              <a href={projectHref(project.destination)} aria-label={`${project.title} — ${project.destination.label}`} data-project-main={project.slug} data-typewriter>{project.title}</a>
+            ) : <span data-typewriter>{project.title}</span>}</h2>
+            {(project.destination || project.secondaryLinks.length > 0) && (
+              <div class="project-secondary-links">
+                {project.destination && <span class="project-destination-label" data-typewriter>{project.destination.label}</span>}
+                {project.secondaryLinks.map((link) => <a href={link.href} data-typewriter>{link.label}</a>)}
+              </div>
+            )}
             <p class="project-description" data-typewriter>{project.description}</p>
             {project.context && <div class="project-context" data-typewriter>{project.context}.</div>}
             <div class="project-skills" data-typewriter>{`Skills · ${project.skills.join(' · ')}`}</div>

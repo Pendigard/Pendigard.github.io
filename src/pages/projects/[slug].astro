@@ -6,7 +6,7 @@ import { projectFontVariables } from '../../sections/projects/settings';
 import '../../styles/projects.css';
 
 export function getStaticPaths() {
-  return orderedProjects.filter((project) => project.destination.kind === 'internal')
+  return orderedProjects.filter((project) => project.destination?.kind === 'internal')
     .map((project) => ({ params: { slug: project.slug }, props: { project } }));
 }
 

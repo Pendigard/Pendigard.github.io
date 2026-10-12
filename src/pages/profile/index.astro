@@ -3,7 +3,7 @@ import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SlideIndicator from '../../components/SlideIndicator.astro';
 import portrait from '../../assets/images/profile/celian-portrait.jpg';
-import { introduction, skillGroups, languages, hobbies } from '../../sections/profile/content';
+import { introduction, contacts, skillGroups, languages, hobbies } from '../../sections/profile/content';
 import { profileSettings } from '../../sections/profile/settings';
 import '../../styles/profile.css';
 ---
@@ -18,13 +18,18 @@ import '../../styles/profile.css';
     <section class="profile-slide profile-intro is-active" data-profile-slide aria-label="Profile introduction">
       <div class="profile-slide-inner profile-intro-layout">
         <div class="profile-intro-copy">
-          <span class="profile-eyebrow" data-typewriter>Profile.</span>
-          <h1 data-typewriter data-profile-heading>{introduction.title}</h1>
-          {introduction.paragraphs.map((paragraph) => <p data-typewriter>{paragraph}</p>)}
-          <div class="profile-research">
-            <h2 data-typewriter>Research Interests.</h2>
-            <p data-typewriter>{introduction.interests.join(' · ')}</p>
+          <div class="profile-intro-body">
+            <span class="profile-eyebrow" data-typewriter>Profile.</span>
+            <h1 data-typewriter data-profile-heading>{introduction.title}</h1>
+            {introduction.paragraphs.map((paragraph) => <p data-typewriter>{paragraph}</p>)}
+            <div class="profile-research">
+              <h2 data-typewriter>Research Interests.</h2>
+              <p data-typewriter>{introduction.interests.join(' · ')}</p>
+            </div>
           </div>
+          <nav class="profile-contacts" aria-label="Contact links">
+            {contacts.map((contact) => <a href={contact.href} data-typewriter>{contact.label}</a>)}
+          </nav>
         </div>
         <figure class="profile-portrait">
           <Image src={portrait} alt="Célian outdoors, looking to the side." widths={[360, 540, 760]} sizes="(max-width: 680px) 42vw, 30vw" format="webp" quality={80} loading="eager" />

@@ -1,4 +1,11 @@
+import { sectionSettings } from '../../config/sections';
+
+// Set lineDrawMs or lineDrawEasing here to change only Background's paths.
+const backgroundOverrides: Partial<typeof sectionSettings> = {};
+
 export const backgroundSettings = {
+  ...sectionSettings,
+  ...backgroundOverrides,
   eventsPerSlide: {
     experiences: 1,
     education: 2,

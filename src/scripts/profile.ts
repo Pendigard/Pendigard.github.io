@@ -1,7 +1,7 @@
 import { sectionSettings } from '../config/sections';
 import { profileSettings } from '../sections/profile/settings';
 import { listenToGestures } from './gestures';
-import { animateSlidePair, updateSlideIndicator } from './section-motion';
+import { animateSlidePair, bindSlideIndicator, updateSlideIndicator } from './section-motion';
 import { clearTypingCursor, replaceText, wait, writeText } from './typewriter';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
@@ -168,11 +168,9 @@ function initProfile() {
     homeLink.click();
   };
 
-  const move = async (step: number) => {
-    if (moving || leaving) return;
-    const next = current + step;
-    if (next < 0) { returnHome(); return; }
-    if (next >= slides.length) return;
+  const moveTo = async (next: number) => {
+    if (moving || leaving || next === current || next < 0 || next >= slides.length) return;
+    const step = Math.sign(next - current);
     moving = true;
     finishSlide(current);
     resetTranslations();
@@ -200,6 +198,12 @@ function initProfile() {
     moving = false;
     void revealSlide(current);
   };
+
+  const move = (step: number) => {
+    if (current + step < 0) { if (!moving) returnHome(); return; }
+    void moveTo(current + step);
+  };
+  const stopIndicator = bindSlideIndicator(indicator, (index) => void moveTo(index));
 
   const stopGestures = listenToGestures({
     actions: { up: () => void move(-1), down: () => void move(1) },
@@ -235,6 +239,7 @@ function initProfile() {
     phraseCleanups.forEach((stop) => stop());
     finishHomeReturn();
     stopGestures();
+    stopIndicator();
     window.removeEventListener('keydown', onKeyDown);
     document.documentElement.classList.remove('profile-typing');
     activeRoot = undefined;

@@ -6,12 +6,11 @@ const { count, axis = 'vertical' } = Astro.props;
   class="slide-indicator"
   data-slide-indicator
   data-axis={axis}
-  role="status"
-  aria-live="polite"
-  aria-label={axis === 'vertical' ? `Slide 1 of ${count}` : `View 1 of ${count}`}
+  role="group"
+  aria-label={axis === 'vertical' ? 'Slides' : 'Views'}
   hidden={count < 2}
 >
   {Array.from({ length: count }, (_, index) => (
-    <span class="slide-indicator-bar" data-slide-index={index} data-active={String(index === 0)} aria-hidden="true"></span>
+    <button type="button" class="slide-indicator-bar" data-slide-index={index} data-active={String(index === 0)} aria-label={`${axis === 'vertical' ? 'Slide' : 'View'} ${index + 1} of ${count}`} aria-current={index === 0 ? 'step' : undefined}></button>
   ))}
 </div>

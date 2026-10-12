@@ -1,6 +1,6 @@
 import { sectionSettings } from '../config/sections';
 import { listenToGestures } from './gestures';
-import { animateSlidePair, updateSlideIndicator } from './section-motion';
+import { animateSlidePair, bindSlideIndicator, updateSlideIndicator } from './section-motion';
 import { clearTypingCursor, wait, writeText } from './typewriter';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
@@ -105,11 +105,9 @@ function initPhotos() {
     homeLink.click();
   };
 
-  const move = async (step: number) => {
-    if (moving || leaving) return;
-    const next = current + step;
-    if (next < 0) { returnHome(); return; }
-    if (next >= slides.length) return;
+  const moveTo = async (next: number) => {
+    if (moving || leaving || next === current || next < 0 || next >= slides.length) return;
+    const step = Math.sign(next - current);
     moving = true;
     cancelAnimationFrame(toneFrame);
     toneFrame = requestAnimationFrame(trackHomeLinkTone);
@@ -139,6 +137,12 @@ function initPhotos() {
     updateHomeLinkTone();
     void revealSlide(current);
   };
+
+  const move = (step: number) => {
+    if (current + step < 0) { if (!moving) returnHome(); return; }
+    void moveTo(current + step);
+  };
+  const stopIndicator = bindSlideIndicator(indicator, (index) => void moveTo(index));
 
   const stopGestures = listenToGestures({
     actions: { up: () => void move(-1), down: () => void move(1) },
@@ -172,6 +176,7 @@ function initPhotos() {
     clearTypingCursor();
     finishHomeReturn();
     stopGestures();
+    stopIndicator();
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('resize', updateHomeLinkTone);
     homeLink.classList.remove('photos-on-image');

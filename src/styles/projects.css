@@ -136,7 +136,7 @@ html.projects-typing [data-next-candidate] { visibility: hidden; }
 .project-detail-slide.is-entering { visibility: visible; }
 .project-detail-copy { position: absolute; top: 19%; left: clamp(3.4rem, 9vw, 9rem); width: min(70vw, 55rem); }
 .project-detail-copy p { max-width: 64ch; margin: 1.5rem 0 0; font-size: var(--projects-font-detail-body); line-height: 1.37; }
-.project-back { position: fixed; z-index: 20; left: clamp(1.35rem, 4vw, 4.2rem); bottom: clamp(1.25rem, 4vw, 3.6rem); color: inherit; font-size: clamp(.95rem, 1.15vw, 1.18rem); font-style: italic; text-decoration: none; }
+.project-back { position: fixed; z-index: 20; left: clamp(1.35rem, 4vw, 4.2rem); bottom: clamp(1.25rem, 4vw, 3.6rem); color: inherit; font-family: 'Times New Roman', Georgia, serif; font-weight: 400; letter-spacing: -.057em; font-size: clamp(1.05rem, 1.2vw, 1.25rem); text-decoration: none; }
 .project-back:hover,
 .project-back:focus-visible { text-decoration: underline; text-underline-offset: .15em; }
 .projects-selector[hidden], .project-back[hidden] { display: none; }

@@ -54,6 +54,17 @@ export function returnToPrevious(link: HTMLAnchorElement) {
   return false;
 }
 
+export function openHorizontalView(index: number, previousLink: HTMLAnchorElement) {
+  const position = horizontalPosition();
+  if (index < 0 || index >= position.active) return;
+  if (index === position.active - 1) {
+    returnToPrevious(previousLink);
+    return;
+  }
+  const context = contextFromUrl();
+  if (index === 0 && context) void navigate(`/background/#${encodeURIComponent(context.id)}`);
+}
+
 export function clearHorizontalPositions() {
   backgroundPosition = undefined;
   projectsPosition = undefined;

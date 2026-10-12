@@ -1,8 +1,8 @@
-import { animateSlidePair, updateSlideIndicator } from './section-motion';
+import { animateSlidePair, bindSlideIndicator, updateSlideIndicator } from './section-motion';
 import { listenToGestures } from './gestures';
 import { projectSettings } from '../sections/projects/settings';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
-import { contextFromUrl, getProjectsPosition, horizontalPosition, returnToPrevious, saveProjectsPosition, updatePreviousLink } from './horizontal-navigation';
+import { contextFromUrl, getProjectsPosition, horizontalPosition, openHorizontalView, returnToPrevious, saveProjectsPosition, updatePreviousLink } from './horizontal-navigation';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
 import { createAutoSelection } from './auto-selection';
@@ -307,11 +307,9 @@ function initProjects() {
     finishCurrent(false);
     homeLink.click();
   };
-  const move = async (step: number) => {
-    if (moving || leaving) return;
-    const next = current + step;
-    if (next < 0) { returnHome(); return; }
-    if (next >= slides.length) return;
+  const moveTo = async (next: number) => {
+    if (moving || leaving || next === current || next < 0 || next >= slides.length) return;
+    const step = Math.sign(next - current);
     moving = true;
     const interruptedIntro = introPending;
     finishCurrent();
@@ -340,6 +338,11 @@ function initProjects() {
     moving = false;
     void revealCurrent();
   };
+  const move = (step: number) => {
+    if (current + step < 0) { if (!moving) returnHome(); return; }
+    void moveTo(current + step);
+  };
+  const stopIndicator = bindSlideIndicator(indicator, (index) => void moveTo(index));
 
   const applyFilter = async (nextFilter: string) => {
     if (moving || nextFilter === filter) return;
@@ -445,6 +448,14 @@ function initProjects() {
   if (context) updatePreviousLink(backLink);
   const horizontal = horizontalPosition();
   updateSlideIndicator(horizontalIndicator, horizontal.active, horizontal.count);
+  const stopHorizontalIndicator = bindSlideIndicator(horizontalIndicator, (index) => {
+    if (context && index === 0 && !leaving) {
+      finishCurrent();
+      saveProjectsPosition({ filter, slide: current, revealedProjects: [...revealed], context: context.id });
+      leaving = true;
+      openHorizontalView(index, backLink);
+    }
+  });
   root.querySelectorAll<HTMLAnchorElement>('[data-project-main]').forEach((link) => {
     if (context && new URL(link.href).origin === location.origin && /^\/projects\/[^/]+\/?$/.test(new URL(link.href).pathname)) {
       link.search = `?from=${encodeURIComponent(context.id)}`;
@@ -508,6 +519,8 @@ function initProjects() {
     document.documentElement.classList.remove('projects-typing');
     finishHomeReturn();
     stopGestures();
+    stopIndicator();
+    stopHorizontalIndicator();
     window.clearTimeout(resizeTimer);
     selector.removeEventListener('click', onSelectorClick);
     selector.removeEventListener('wheel', onWheel, true);

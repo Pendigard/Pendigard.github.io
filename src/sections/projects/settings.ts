@@ -1,8 +1,10 @@
 import { sectionSettings } from '../../config/sections';
 
 // Shared values are defaults. Add a key here only when Projects needs to differ.
-// A local override wins over the same key in sectionSettings.
-const projectOverrides: Partial<typeof sectionSettings> = {};
+// A local override wins over the same key in sectionSettings; lineDrawMs controls project rules.
+const projectOverrides: Partial<typeof sectionSettings> = {
+  lineDrawMs: 425,
+};
 
 export const projectSettings = {
   ...sectionSettings,

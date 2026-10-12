@@ -53,10 +53,16 @@
   line-height: 1.08;
 }
 
-.profile-intro-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(13rem, .85fr); gap: clamp(2rem, 5vw, 6rem); align-items: center; }
+.profile-intro-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(13rem, .85fr); gap: clamp(2rem, 5vw, 6rem); align-items: stretch; }
+.profile-intro-copy { display: flex; min-width: 0; flex-direction: column; }
+.profile-intro-body { margin-block: auto; }
 .profile-intro-copy p { max-width: 62ch; margin: 0 0 1em; font-size: clamp(1.12rem, 1.35vw, 1.48rem); line-height: 1.37; }
 .profile-research { margin-top: clamp(1.5rem, 4vh, 3rem); }
 .profile-research p { max-width: 55ch; font-size: clamp(1rem, 1.2vw, 1.3rem); }
+.profile-contacts { display: flex; flex-wrap: wrap; gap: .6rem clamp(1.2rem, 3vw, 2.8rem); padding-top: clamp(1.5rem, 4vh, 3rem); }
+.profile-contacts a { color: inherit; font-size: clamp(1rem, 1.2vw, 1.3rem); font-style: italic; text-decoration: none; white-space: nowrap; }
+.profile-contacts a:hover, .profile-contacts a:focus-visible { text-decoration: underline; text-underline-offset: .16em; }
+.profile-contacts a:focus-visible { outline: 1px solid currentColor; outline-offset: .2em; }
 .profile-portrait { margin: 0; align-self: center; }
 .profile-portrait img { display: block; width: 100%; max-height: 68svh; object-fit: cover; object-position: center 39%; }
 
@@ -86,14 +92,16 @@ html.profile-typing .profile-slide:first-child .profile-portrait { visibility: h
   .profile-slide h1 { font-size: clamp(2.45rem, 11vw, 4.5rem); margin: .42em 0 .5em; }
   .profile-slide h2 { font-size: clamp(1.28rem, 5.7vw, 1.8rem); }
   .profile-intro-layout { display: block; position: relative; }
-  .profile-intro-copy { position: relative; z-index: 1; }
+  .profile-intro-copy { position: relative; z-index: 1; min-height: calc(100svh - 7.5rem); }
   .profile-intro-copy h1 { max-width: 66%; min-height: 2.2em; }
   .profile-intro-copy p { font-size: clamp(.93rem, 3.65vw, 1.18rem); line-height: 1.24; margin-bottom: .7em; }
-  .profile-intro-copy > p:first-of-type { margin-top: .25rem; }
+  .profile-intro-body > p:first-of-type { margin-top: .25rem; }
   .profile-portrait { position: absolute; top: 2.1rem; right: 2rem; width: 30%; }
   .profile-portrait img { height: clamp(7.5rem, 27vh, 12rem); object-position: center 42%; }
   .profile-research { margin-top: .9rem; }
   .profile-research p { font-size: clamp(.9rem, 3.4vw, 1.08rem); }
+  .profile-contacts { gap: .4rem 1.1rem; padding-top: 1.3rem; }
+  .profile-contacts a { font-size: clamp(.93rem, 3.65vw, 1.1rem); }
   .profile-skill-grid { --profile-skill-gap: .6rem; }
   .profile-skill-group h2 { font-size: clamp(1.08rem, 4.6vw, 1.4rem); margin-bottom: .15em; }
   .profile-skill-group p { font-size: clamp(.87rem, 3.5vw, 1rem); line-height: 1.16; margin: .12em 0; }
@@ -110,9 +118,13 @@ html.profile-typing .profile-slide:first-child .profile-portrait { visibility: h
 @media (max-width: 380px), (max-height: 650px) {
   .profile-slide-inner { padding-top: 1.5rem; padding-bottom: 4.2rem; }
   .profile-slide h1 { margin: .32em 0 .36em; }
+  .profile-intro-copy p { margin-bottom: .55em; line-height: 1.2; }
+  .profile-research { margin-top: .55rem; }
+  .profile-contacts { padding-top: .7rem; }
   .profile-skill-grid { --profile-skill-gap: .52rem; }
   .profile-portrait { top: 1.5rem; }
   .profile-portrait img { height: 7.5rem; }
+  .profile-intro-copy { min-height: calc(100svh - 5.7rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
