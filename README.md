@@ -1,19 +1,19 @@
-# Portfolio de Célian
+# Célian's Portfolio
 
-Base Astro pour construire progressivement le portfolio décrit dans [AGENTS.md](AGENTS.md).
+A static Astro portfolio featuring projects, background, profile, and photography. The site uses slide-by-slide navigation, page transitions, and text that appears in reading order.
 
-## Démarrer
+## Run locally
 
-Prérequis : Node.js 22.12 ou plus récent, et npm.
+Requires Node.js 22.12 or newer and npm.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Ouvrir ensuite l'adresse locale indiquée dans le terminal, généralement `http://localhost:4321/`.
+Open the local address printed by Astro, usually `http://localhost:4321/`.
 
-## Vérifier et construire
+## Check and build
 
 ```sh
 npm run check
@@ -21,30 +21,30 @@ npm run build
 npm run preview
 ```
 
-Astro génère le site statique dans `dist/`. Aucun backend ni service externe n'est nécessaire pour cette première étape.
+Astro writes the static site to `dist/`. The site does not require a backend or database.
 
-## Organisation actuelle
+## Pages and navigation
 
-- `src/pages/` : accueil et quatre routes de section.
-- `src/layouts/` : structure commune, incluant le routeur de transitions d'Astro.
-- `src/config/home.ts` : sections et réglages de l'accueil.
-- `src/sections/background/` : contenu provisoire, réglages et composition des frises Experiences et Education.
-- `src/sections/projects/` : neuf projets, tags filtrables, destinations et réglages propres à Projects.
-- `src/sections/profile/` : textes et réglages éditables des quatre slides de Profile.
-- Les sous-titres Experiences et Education restent en place pendant les slides de leur frise et accompagnent la transition vers la frise suivante.
-- `src/scripts/` : navigation, séquence d'ouverture et transitions.
-- `src/styles/` : styles partagés et styles de l'accueil.
-- `src/assets/images/home/` : photos retenues et optimisées par Astro.
-- `src/assets/images/profile/` : portrait retenu pour Profile et optimisé par Astro.
-- `img/homepage/` : banque de photographies d'origine.
-- `refs/` : références visuelles et maquettes, à consulter selon `AGENTS.md`.
+- `/` introduces the site and lets visitors select a section by scrolling or using the keyboard. A different background photograph is chosen on a full reload when possible.
+- `/background/` presents Experiences and Education as vertical timelines. Events with associated projects link to a filtered Projects view. `/career/` redirects here.
+- `/projects/` presents nine projects with tag filters, links, and contextual views opened from Background. Project entries and filters are defined in `src/sections/projects/content.ts`.
+- `/profile/` covers research interests, technical skills, languages, and hobbies across four slides. `/me/` redirects here.
+- `/photos/` presents the photography gallery using eight layout templates. Its selection and slide arrangement are configured in `src/sections/photos/`.
 
-L'accueil propose l'écriture progressive, une démonstration de la sélection, puis la navigation à la molette, au pavé tactile, au clavier et par liens. Un rechargement complet choisit une autre photo que celle du chargement précédent, lorsque c'est possible. Un clic abrège la séquence en cours tout en laissant agir les liens.
+Sections can be opened directly by URL. Within a section, the mouse wheel, touch gestures, and arrow keys move between slides. Links provide navigation between routes, while Astro's `ClientRouter` handles page transitions. Reduced-motion preferences are supported.
 
-`/background/` présente deux frises sur des slides parcourues vers le bas pour avancer et vers le haut pour revenir, à la molette ou aux flèches du clavier. Une colonne de rectangles indique la slide active. Le contenu de `src/sections/background/content.ts` est explicitement provisoire : remplacer les entrées par des informations biographiques vérifiées, dans l'ordre antéchronologique. `src/sections/background/settings.ts` règle le nombre d'événements par slide et les tailles de texte ; les rythmes d'animation et seuils de défilement viennent de `src/config/sections.ts`. Le lien de retour s'écrit après la première slide à chaque ouverture de section. L'ancienne URL `/career/` redirige vers `/background/`.
+## Project structure
 
-`/projects/` répartit les neuf projets selon leur hauteur mesurée et propose cinq tags de `src/sections/projects/content.ts` comme filtres. Chaque fiche garde son contexte, ses compétences, ses technologies et sa destination dans ce fichier. Les projets sans lien vers l'ensemble du travail ouvrent une sous-section interne à droite ; les autres ouvrent la ressource indiquée sur leur fiche. Les descriptions reposent sur la liste fournie par Célian ; les dépôts, le site et la prépublication liés ont été contrôlés, mais les contributions et résultats déclarés n'ont pas tous été vérifiés indépendamment. `src/config/sections.ts` contient les valeurs communes de vitesse d'écriture, de tracé, de transition et de geste. Dans `src/sections/projects/settings.ts`, `projectOverrides` remplace ponctuellement ces valeurs ; les autres réglages Projects concernent l'écriture de ses zones, le sélecteur, les gestes tactiles, la mise en page et les tailles de texte. La priorité est **valeur locale explicite, puis valeur commune**. Les valeurs de mise en page et de typographie sont transmises aux styles par des variables CSS `--projects-layout-*` et `--projects-font-*`. Les utilitaires partagés pour la molette, le déplacement vertical et l'indicateur se trouvent dans `src/scripts/section-motion.ts`.
+- `src/pages/` defines the routes.
+- `src/sections/` contains section content, templates, and settings.
+- `src/config/` holds shared interaction and animation settings.
+- `src/scripts/` handles navigation, gestures, transitions, and text animation.
+- `src/styles/` contains shared and section styles.
+- `src/assets/images/` contains the images selected for the site and optimized by Astro.
+- `public/` contains the favicon and Apple touch icon.
 
-`/profile/` présente quatre slides : introduction et recherche, compétences, langues, puis loisirs. Les phrases en français, japonais et espagnol peuvent être remplacées progressivement par leur traduction anglaise au survol, au focus clavier ou au toucher. Les textes se modifient dans `src/sections/profile/content.ts` ; `/me/` redirige vers `/profile/`.
+The local `img/` directory holds original photographs, and `refs/` holds design references. Neither directory is published with the site.
 
-`/photos/` est encore une page d'attente ; un défilement vers le bas y ramène à l'accueil.
+## Deploy to GitHub Pages
+
+The site is configured for the root address `https://pendigard.github.io/`. Publish it from a public repository named `Pendigard.github.io`, then select **GitHub Actions** as the source in the repository's **Settings → Pages**. The workflow in `.github/workflows/deploy.yml` builds and deploys the site on pushes to `master`; it can also be run manually from the Actions tab.
