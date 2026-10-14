@@ -1,6 +1,7 @@
 import { clearHorizontalPositions, routeDepth } from './horizontal-navigation';
 import { finishSectionNav, resetSectionNav } from './section-nav';
 import { sectionIndex } from '../config/section-navigation';
+import { clearRevealedSlides } from './section-reveals';
 
 let pendingParent: string | undefined;
 
@@ -19,7 +20,10 @@ document.addEventListener('astro:before-preparation', (event) => {
     : fromDepth > 0 && toDepth > 0 && fromDepth !== toDepth ? (toDepth > fromDepth ? 'right' : 'left')
     : to === '/' && from !== '/' ? 'down' : 'up';
   pendingParent = toDepth > fromDepth && fromDepth > 0 ? fromUrl.href : undefined;
-  if (to === '/') clearHorizontalPositions();
+  if (to === '/') {
+    clearHorizontalPositions();
+    clearRevealedSlides();
+  }
 });
 
 document.addEventListener('astro:page-load', () => {

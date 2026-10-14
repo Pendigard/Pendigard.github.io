@@ -98,8 +98,7 @@ export function listenToGestures(options: GestureOptions) {
     actions[directionFor(axis, amount)]?.();
   };
 
-  // Touch displacement uses the direction of the finger horizontally, and
-  // the direction of content travel vertically (swipe up advances down).
+  // Touch displacement follows content travel on both axes.
   const onTouchStart = (event: TouchEvent) => {
     if (event.touches.length !== 1) { touchStart = undefined; return; }
     const touch = event.changedTouches[0];
@@ -111,7 +110,7 @@ export function listenToGestures(options: GestureOptions) {
     if (!touchStart) return;
     const touch = event.changedTouches[0];
     if (!touch) return;
-    const dx = touch.clientX - touchStart.x;
+    const dx = touchStart.x - touch.clientX;
     const dy = touchStart.y - touch.clientY;
     const chosenAxis: GestureAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
     const delta = chosenAxis === 'x' ? dx : dy;

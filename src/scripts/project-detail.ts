@@ -150,6 +150,7 @@ function initProjectDetail() {
   })();
 
   cleanup = () => {
+    finishCurrent();
     if (document.documentElement.dataset.routeDirection !== 'down') saveDetailPosition(detailKey, { slide: current, revealed: [...revealed] });
     abort?.abort();
     slideAnimations.forEach((animation) => animation.cancel());

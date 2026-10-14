@@ -6,6 +6,7 @@ import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-ret
 import { setSkippableAnimation } from './skippable';
 import { ensureSectionNav } from './section-nav';
 import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
+import { getRevealedSlides, saveRevealedSlides } from './section-reveals';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -24,7 +25,7 @@ function initPhotos() {
   const homeLink = document.querySelector<HTMLAnchorElement>('[data-home-return]')!;
   const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('[data-section-nav-link]')];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const revealed = new Set<number>();
+  const revealed = getRevealedSlides('/photos/');
   let current = 0;
   let moving = false;
   let writingAbort: AbortController | undefined;
@@ -70,7 +71,7 @@ function initPhotos() {
     slide.setAttribute('aria-hidden', String(index !== 0));
   });
   root.classList.add('is-enhanced');
-  prepareHomeReturn();
+  if (revealed.has(0)) finishHomeReturn(); else prepareHomeReturn();
   updateSlideIndicator(indicator, current, slides.length);
   updateNavigationTone();
   toneFrame = requestAnimationFrame(trackNavigationTone);
@@ -179,6 +180,8 @@ function initPhotos() {
   })();
 
   cleanup = () => {
+    finishSlide(current);
+    if (document.documentElement.dataset.routeDirection !== 'down') saveRevealedSlides('/photos/', revealed);
     writingAbort?.abort();
     slideAnimations.forEach((animation) => animation.cancel());
     cancelAnimationFrame(toneFrame);

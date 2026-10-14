@@ -538,6 +538,7 @@ function initProjects() {
   })();
 
   cleanup = () => {
+    finishCurrent();
     if (document.documentElement.dataset.routeDirection !== 'down') {
       saveProjectsPosition({ filter, slide: current, revealedProjects: [...revealed], context: context?.id ?? null });
     }

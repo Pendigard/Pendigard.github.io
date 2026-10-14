@@ -70,6 +70,7 @@ function initBackground() {
     clearTypingCursor();
     clearSkip();
     revealed.add(index);
+    arrivedHeadings.add(slides[index].dataset.part!);
     if (index === 0) finishHomeReturn();
   };
 
@@ -233,6 +234,7 @@ function initBackground() {
   root.addEventListener('click', onProjectLink);
 
   cleanup = () => {
+    finishSlide(current);
     if (document.documentElement.dataset.routeDirection !== 'down') {
       saveBackgroundPosition({ slide: current, revealed: [...revealed], headings: [...arrivedHeadings] });
     }

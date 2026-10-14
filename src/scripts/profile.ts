@@ -7,6 +7,7 @@ import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-ret
 import { setSkippableAnimation } from './skippable';
 import { ensureSectionNav } from './section-nav';
 import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
+import { getRevealedSlides, saveRevealedSlides } from './section-reveals';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -25,7 +26,7 @@ function initProfile() {
   const portrait = root.querySelector<HTMLElement>('.profile-portrait')!;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hoverCapable = matchMedia('(hover: hover)');
-  const revealed = new Set<number>();
+  const revealed = getRevealedSlides('/profile/');
   const translationAborts = new Map<HTMLButtonElement, AbortController>();
   const phraseCleanups: (() => void)[] = [];
   let current = 0;
@@ -107,7 +108,7 @@ function initProfile() {
     slide.setAttribute('aria-hidden', String(index !== 0));
   });
   root.classList.add('is-enhanced');
-  prepareHomeReturn();
+  if (revealed.has(0)) finishHomeReturn(); else prepareHomeReturn();
   updateSlideIndicator(indicator, current, slides.length);
 
   const finishSlide = (index: number) => {
@@ -224,7 +225,7 @@ function initProfile() {
   };
   window.addEventListener('keydown', onKeyDown);
 
-  if (!reducedMotion) fields[0].forEach(({ field }) => { field.textContent = ''; });
+  if (!reducedMotion && !revealed.has(0)) fields[0].forEach(({ field }) => { field.textContent = ''; });
   document.documentElement.classList.remove('profile-typing');
   void (async () => {
     await ensureSectionNav();
@@ -234,6 +235,8 @@ function initProfile() {
   })();
 
   cleanup = () => {
+    finishSlide(current);
+    if (document.documentElement.dataset.routeDirection !== 'down') saveRevealedSlides('/profile/', revealed);
     introAbort?.abort();
     portraitAnimation?.cancel();
     slideAnimations.forEach((animation) => animation.cancel());
