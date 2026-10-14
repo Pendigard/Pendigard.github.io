@@ -3,13 +3,6 @@ import { finishSectionNav, resetSectionNav } from './section-nav';
 import { sectionIndex } from '../config/section-navigation';
 
 let pendingParent: string | undefined;
-let sectionNavigation = false;
-
-document.addEventListener('click', (event) => {
-  sectionNavigation = event instanceof MouseEvent && event.button === 0 &&
-    !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey &&
-    event.target instanceof Element && !!event.target.closest('[data-section-nav-link]');
-}, true);
 
 document.addEventListener('astro:before-preparation', (event) => {
   const fromUrl = new URL(event.from);
@@ -21,15 +14,12 @@ document.addEventListener('astro:before-preparation', (event) => {
   const fromSection = sectionIndex(from);
   const toSection = sectionIndex(to);
   document.documentElement.dataset.routeDirection =
-    sectionNavigation && fromSection >= 0 && toSection >= 0 && fromSection !== toSection
+    fromSection >= 0 && toSection >= 0 && fromSection !== toSection
       ? (toSection > fromSection ? 'right' : 'left')
     : fromDepth > 0 && toDepth > 0 && fromDepth !== toDepth ? (toDepth > fromDepth ? 'right' : 'left')
-    : fromSection >= 0 && toSection >= 0 && fromSection !== toSection
-      ? (toSection > fromSection ? 'right' : 'left')
     : to === '/' && from !== '/' ? 'down' : 'up';
   pendingParent = toDepth > fromDepth && fromDepth > 0 ? fromUrl.href : undefined;
   if (to === '/') clearHorizontalPositions();
-  sectionNavigation = false;
 });
 
 document.addEventListener('astro:page-load', () => {

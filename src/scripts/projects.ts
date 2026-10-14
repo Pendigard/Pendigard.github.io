@@ -26,11 +26,11 @@ function initProjects() {
   const host = root.querySelector<HTMLElement>('[data-projects-slides]')!;
   const title = root.querySelector<HTMLElement>('[data-projects-title]')!;
   const selector = root.querySelector<HTMLElement>('[data-projects-selector]')!;
+  const filterList = root.querySelector<HTMLElement>('[data-projects-filter-list]')!;
   const prefix = root.querySelector<HTMLElement>('[data-filter-prefix]')!;
   const suffix = root.querySelector<HTMLElement>('[data-filter-suffix]')!;
   const candidateWindow = root.querySelector<HTMLElement>('.projects-candidate-window')!;
   const track = root.querySelector<HTMLElement>('[data-candidate-track]')!;
-  const nextButton = root.querySelector<HTMLButtonElement>('[data-next-candidate]')!;
   const announcement = root.querySelector<HTMLOutputElement>('[data-projects-announcement]')!;
   const indicator = document.querySelector<HTMLElement>('[data-slide-indicator][data-axis="vertical"]')!;
   const articles = [...source.querySelectorAll<HTMLElement>('[data-project-id]')];
@@ -58,6 +58,33 @@ function initProjects() {
 
   const candidates = () => context ? filters : filters.filter((item) => item !== filter);
   const candidate = () => candidates()[candidateIndex % candidates().length];
+  const highlightCandidate = () => {
+    filterList.querySelectorAll<HTMLButtonElement>('[data-filter-option]').forEach((button) => {
+      button.dataset.preview = String(button.dataset.filterOption === candidate());
+    });
+  };
+  const renderFilterList = () => {
+    filterList.replaceChildren(...candidates().map((name) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.filterOption = name;
+      button.setAttribute('aria-label', `Show ${name} projects`);
+      const label = document.createElement('span');
+      label.dataset.filterLabel = '';
+      label.textContent = name;
+      button.append(label);
+      return button;
+    }));
+    highlightCandidate();
+  };
+  const finishFilterList = () => {
+    filterList.querySelectorAll<HTMLElement>('[data-filter-label]').forEach((label) => {
+      label.textContent = label.parentElement?.dataset.filterOption || '';
+    });
+  };
+  const prepareFilterList = () => {
+    filterList.querySelectorAll<HTMLElement>('[data-filter-label]').forEach((label) => { label.textContent = ''; });
+  };
   const candidateButton = (name: string) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -72,6 +99,7 @@ function initProjects() {
     const button = candidateButton(candidate());
     track.replaceChildren(button);
     candidateWindow.style.width = `${button.getBoundingClientRect().width}px`;
+    highlightCandidate();
   };
   const cycleCandidate = async (step: number, announce = true, duration: number = projectSettings.selector.stepMs) => {
     if (announce) {
@@ -84,6 +112,7 @@ function initProjects() {
     const from = candidate();
     candidateIndex = (candidateIndex + step + options.length) % options.length;
     const to = candidate();
+    highlightCandidate();
     const height = track.parentElement!.getBoundingClientRect().height;
     const outgoing = candidateButton(from);
     outgoing.tabIndex = -1;
@@ -222,8 +251,8 @@ function initProjects() {
     title.textContent = displayTitle();
     prefix.textContent = 'Feel free to filter by ';
     suffix.textContent = ' projects.';
+    finishFilterList();
     if (interruptedIntro) renderCandidate();
-    nextButton.hidden = false;
     document.documentElement.classList.remove('projects-typing');
     slides[current]?.querySelectorAll<HTMLElement>('[data-project-id]').forEach((article) => {
       restoreArticle(article);
@@ -251,7 +280,6 @@ function initProjects() {
         prefix.textContent = '';
         track.querySelector<HTMLElement>('[data-candidate]')!.textContent = '';
         suffix.textContent = '';
-        nextButton.hidden = true;
       }
     }
     document.documentElement.classList.remove('projects-typing');
@@ -266,9 +294,14 @@ function initProjects() {
         if (!(await writeText(candidateField, candidate(), projectSettings.writing.selectorMs, abort.signal))) return;
         if (!(await wait(projectSettings.betweenFieldsMs, abort.signal))) return;
         if (!(await writeText(suffix, ' projects.', projectSettings.writing.selectorMs, abort.signal))) return;
-        nextButton.hidden = false;
         introPending = false;
         void runDemo();
+      }
+      const labels = [...filterList.querySelectorAll<HTMLElement>('[data-filter-label]')];
+      prepareFilterList();
+      for (const label of labels) {
+        if (!(await wait(projectSettings.betweenFieldsMs, abort.signal))) return;
+        if (!(await writeText(label, label.parentElement?.dataset.filterOption || '', projectSettings.writing.selectorMs, abort.signal))) return;
       }
     }
     for (const article of items) {
@@ -333,6 +366,7 @@ function initProjects() {
     moving = true;
     demoAbort?.abort();
     finishCurrent(false);
+    const focusFilterList = filterList.contains(document.activeElement);
     const outgoing = slides[current]?.cloneNode(true) as HTMLElement | undefined;
     if (context) {
       context = undefined;
@@ -344,9 +378,12 @@ function initProjects() {
     filter = nextFilter;
     title.textContent = displayTitle();
     title.style.visibility = reducedMotion ? '' : 'hidden';
-    updateListTop();
     candidateIndex = 0;
+    renderFilterList();
+    if (!reducedMotion) prepareFilterList();
+    if (focusFilterList) filterList.querySelector('button')?.focus({ preventScroll: true });
     renderCandidate();
+    updateListTop();
     buildSlides();
     prepareSlide(0);
     if (outgoing && !reducedMotion) {
@@ -417,8 +454,13 @@ function initProjects() {
   };
   const onSelectorClick = (event: MouseEvent) => {
     autoSelection.userActivity();
-    if (event.target instanceof Element && event.target.closest('[data-next-candidate]')) { void cycleCandidate(1); return; }
     if (event.target instanceof Element && event.target.closest('[data-candidate]')) void applyFilter(candidate());
+  };
+  const onFilterListClick = (event: MouseEvent) => {
+    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-filter-option]') : null;
+    if (!button) return;
+    autoSelection.userActivity();
+    void applyFilter(button.dataset.filterOption!);
   };
   const onProjectClick = (event: MouseEvent) => {
     if (!(event.target instanceof Element)) return;
@@ -445,6 +487,7 @@ function initProjects() {
   };
 
   title.textContent = displayTitle();
+  renderFilterList();
   root.querySelectorAll<HTMLAnchorElement>('[data-project-main]').forEach((link) => {
     if (context && new URL(link.href).origin === location.origin && /^\/projects\/[^/]+\/?$/.test(new URL(link.href).pathname)) {
       link.search = `?from=${encodeURIComponent(context.id)}`;
@@ -469,6 +512,7 @@ function initProjects() {
   renderCandidate();
   if (origin || reducedMotion) document.documentElement.classList.remove('projects-typing');
   selector.addEventListener('click', onSelectorClick);
+  filterList.addEventListener('click', onFilterListClick);
   const onWheel = () => autoSelection.userActivity();
   const onTouchStart = () => autoSelection.userActivity();
   selector.addEventListener('wheel', onWheel, { capture: true, passive: true });
@@ -511,6 +555,7 @@ function initProjects() {
     stopIndicator();
     window.clearTimeout(resizeTimer);
     selector.removeEventListener('click', onSelectorClick);
+    filterList.removeEventListener('click', onFilterListClick);
     selector.removeEventListener('wheel', onWheel, true);
     selector.removeEventListener('touchstart', onTouchStart, true);
     selector.removeEventListener('mouseenter', onMouseEnter);

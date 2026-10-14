@@ -17,8 +17,10 @@ import '../../styles/projects.css';
       <h1 data-projects-title>All.</h1>
       <div class="projects-selector" data-projects-selector aria-label="Project filters">
         <span data-filter-prefix>Feel free to filter by </span><span class="projects-candidate-window"><span class="projects-candidate-track" data-candidate-track><button type="button" data-candidate>{projectFilters[0]}</button></span></span><span data-filter-suffix> projects.</span>
-        <button class="projects-next-filter" type="button" data-next-candidate aria-label="Show another project filter">↕</button>
       </div>
+      <nav class="projects-filter-list" data-projects-filter-list aria-label="Choose a project filter">
+        {projectFilters.map((name, index) => <button type="button" data-filter-option={name} data-preview={String(index === 0)}><span data-filter-label>{name}</span></button>)}
+      </nav>
       <output class="sr-only" aria-live="polite" data-projects-announcement></output>
     </header>
     <div class="projects-list-frame" data-list-frame>
