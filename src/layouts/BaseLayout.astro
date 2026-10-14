@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from 'astro:transitions';
+import SectionNav from '../components/SectionNav.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -24,6 +25,7 @@ const isHome = Astro.url.pathname === '/';
     <slot name="head" />
   </head>
   <body data-page={isHome ? 'home' : 'interior'}>
+    {!isHome && <SectionNav />}
     <slot />
     <a href="/" class="home-return" data-home-return data-astro-prefetch>Back to the homepage.</a>
     <script>

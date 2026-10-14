@@ -9,6 +9,7 @@ type GestureOptions = Partial<typeof gestureSettings> & {
   zones?: { element: Element; actions: GestureActions; thresholdPx?: number; touchThresholdPx?: number }[];
   touchRoot?: HTMLElement;
   horizontalThresholdPx?: number;
+  horizontalWheelLockMs?: number;
   touchHorizontalThresholdPx?: number;
   // The homepage historically requires a single intentional wheel event.
   accumulate?: boolean;
@@ -21,6 +22,8 @@ export function normalizedWheelDelta(event: WheelEvent, axis: GestureAxis) {
   return event.deltaMode === WheelEvent.DOM_DELTA_LINE ? value * 16
     : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? value * pageSize : value;
 }
+
+let horizontalWheelLockedUntil = -Infinity;
 
 /** One listener owns both axes and all zones, so a diagonal gesture has one destination. */
 export function listenToGestures(options: GestureOptions) {
@@ -61,6 +64,11 @@ export function listenToGestures(options: GestureOptions) {
     const magnitude = Math.max(Math.abs(x), Math.abs(y));
     if (magnitude === 0) return;
     const now = performance.now();
+    if (options.horizontalWheelLockMs && now < horizontalWheelLockedUntil &&
+      (axis === 'x' || Math.abs(x) >= Math.abs(y) * settings.axisRatio)) {
+      horizontalWheelLockedUntil = Math.max(horizontalWheelLockedUntil, now + settings.releaseGapMs);
+      return;
+    }
     const gap = now - lastAt;
     const fresh = gap >= (fired ? settings.releaseGapMs : settings.gestureGapMs) && now >= cooldownUntil;
     const notch = event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL || magnitude >= settings.notchMagnitudePx;
@@ -84,6 +92,9 @@ export function listenToGestures(options: GestureOptions) {
     if (Math.abs(amount) < (axis === 'x' ? options.horizontalThresholdPx ?? threshold : threshold)) return;
     fired = true;
     cooldownUntil = now + settings.cooldownMs;
+    if (axis === 'x' && options.horizontalWheelLockMs) {
+      horizontalWheelLockedUntil = now + options.horizontalWheelLockMs;
+    }
     actions[directionFor(axis, amount)]?.();
   };
 

@@ -105,8 +105,8 @@
   line-height: 1.2;
 }
 .timeline-subtitle + .timeline-subtitle { margin-top: .2em; }
-.timeline-project-link { display: inline-block; margin-top: .55em; color: inherit; font-size: var(--description-size); font-style: italic; text-decoration: none; }
-.timeline-project-link:hover, .timeline-project-link:focus-visible { text-decoration: underline; text-underline-offset: .15em; }
+.timeline-details h3 a { color: inherit; text-decoration: underline; text-underline-offset: .12em; text-decoration-thickness: 1px; }
+.timeline-details h3 a:hover, .timeline-details h3 a:focus-visible { text-decoration: underline; text-underline-offset: .12em; text-decoration-thickness: 1px; }
 
 .background-heading-layer {
   position: absolute;
@@ -125,16 +125,9 @@
 
 .background-heading.is-active { visibility: visible; }
 
-.background-section-name {
-  display: block;
-  min-height: 1.2em;
-  font-size: clamp(.86rem, 1vw, 1rem);
-  letter-spacing: .025em;
-}
-
 .background-heading h2 {
   min-height: 1em;
-  margin: clamp(1.5rem, 3.2vw, 3rem) 0 0;
+  margin: 0;
   font-size: var(--part-title-size);
   font-weight: 400;
   letter-spacing: -.065em;
@@ -156,9 +149,8 @@
 
 @media (max-width: 640px) {
   .background-section { min-height: 34rem; }
-  .background-heading { top: 5%; left: calc(28vw + 1.2rem); right: 1.25rem; }
+  .background-heading { top: max(5.2rem, 12%); left: calc(28vw + 1.2rem); right: 1.25rem; }
   .background-heading h2 { font-size: var(--part-title-mobile-size); }
-  .background-heading h2 { margin-top: .65rem; }
   .background-draft-note { margin-top: .7rem; }
   .background-timeline { left: 1.25rem; right: 1.25rem; width: auto; --axis-x: 28%; }
   .timeline-events { inset: 32% 0 8%; }
@@ -166,7 +158,6 @@
   .timeline-details .timeline-subtitle { font-size: var(--subtitle-mobile-size); }
   .timeline-subtitles { margin-bottom: .65rem; }
   .timeline-details p:not(.timeline-subtitle) { margin-right: 1rem; font-size: var(--description-mobile-size); line-height: 1.25; }
-  .timeline-project-link { font-size: var(--description-mobile-size); }
   .background-slide[data-first='true'] .timeline-path { top: 31%; }
   .background-slide[data-last='true'] .timeline-path { bottom: 12%; }
   .background-slide[data-first='true'][data-last='true'] .timeline-path { bottom: 0; }

@@ -14,10 +14,9 @@ import '../../styles/projects.css';
   </script>
   <main class="projects-section" data-projects data-filters={JSON.stringify(projectFilters)} style={`--projects-selector-width-ms:${projectSettings.selector.widthMs}ms;--projects-selector-easing:${projectSettings.selector.easing};${projectFontVariables}${projectLayoutVariables}`}>
     <header class="projects-heading">
-      <span class="projects-eyebrow" data-projects-eyebrow>Projects.</span>
       <h1 data-projects-title>All.</h1>
       <div class="projects-selector" data-projects-selector aria-label="Project filters">
-        <span data-filter-prefix>You can also look at </span><span class="projects-candidate-window"><span class="projects-candidate-track" data-candidate-track><button type="button" data-candidate>{projectFilters[0]}</button></span></span><span data-filter-suffix> projects.</span>
+        <span data-filter-prefix>Feel free to filter by </span><span class="projects-candidate-window"><span class="projects-candidate-track" data-candidate-track><button type="button" data-candidate>{projectFilters[0]}</button></span></span><span data-filter-suffix> projects.</span>
         <button class="projects-next-filter" type="button" data-next-candidate aria-label="Show another project filter">↕</button>
       </div>
       <output class="sr-only" aria-live="polite" data-projects-announcement></output>
@@ -47,8 +46,6 @@ import '../../styles/projects.css';
       </div>
     </div>
   </main>
-  <a class="project-back" href="/background/" data-projects-back data-astro-prefetch hidden>Back to the previous section.</a>
   <SlideIndicator count={1} />
-  <SlideIndicator count={1} axis="horizontal" />
   <script>import '../../scripts/projects';</script>
 </BaseLayout>

@@ -5,6 +5,8 @@ import { animateSlidePair, bindSlideIndicator, updateSlideIndicator } from './se
 import { clearTypingCursor, replaceText, wait, writeText } from './typewriter';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
+import { ensureSectionNav } from './section-nav';
+import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -20,7 +22,6 @@ function initProfile() {
   const fields = slides.map((slide) => [...slide.querySelectorAll<HTMLElement>('[data-typewriter]')]
     .map((field) => ({ field, value: field.textContent || '' })));
   const indicator = document.querySelector<HTMLElement>('[data-slide-indicator]')!;
-  const homeLink = document.querySelector<HTMLAnchorElement>('[data-home-return]')!;
   const portrait = root.querySelector<HTMLElement>('.profile-portrait')!;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hoverCapable = matchMedia('(hover: hover)');
@@ -28,7 +29,6 @@ function initProfile() {
   const translationAborts = new Map<HTMLButtonElement, AbortController>();
   const phraseCleanups: (() => void)[] = [];
   let current = 0;
-  let leaving = false;
   let moving = false;
   let introAbort: AbortController | undefined;
   let portraitAnimation: Animation | undefined;
@@ -160,16 +160,8 @@ function initProfile() {
     if (!abort.signal.aborted) finishSlide(index);
   };
 
-  const returnHome = () => {
-    if (leaving) return;
-    leaving = true;
-    finishSlide(current);
-    resetTranslations();
-    homeLink.click();
-  };
-
   const moveTo = async (next: number) => {
-    if (moving || leaving || next === current || next < 0 || next >= slides.length) return;
+    if (moving || next === current || next < 0 || next >= slides.length) return;
     const step = Math.sign(next - current);
     moving = true;
     finishSlide(current);
@@ -200,13 +192,19 @@ function initProfile() {
   };
 
   const move = (step: number) => {
-    if (current + step < 0) { if (!moving) returnHome(); return; }
+    if (moving) return;
+    if (current + step < 0) { returnHomeFromFirstSlide(current); return; }
     void moveTo(current + step);
   };
   const stopIndicator = bindSlideIndicator(indicator, (index) => void moveTo(index));
 
   const stopGestures = listenToGestures({
-    actions: { up: () => void move(-1), down: () => void move(1) },
+    actions: {
+      up: () => void move(-1), down: () => void move(1),
+      left: () => moveToAdjacentSection(-1), right: () => moveToAdjacentSection(1),
+    },
+    horizontalThresholdPx: sectionSettings.horizontalWheelThreshold,
+    horizontalWheelLockMs: sectionSettings.horizontalWheelLockMs,
     touchRoot: root,
     thresholdPx: sectionSettings.wheelThreshold,
     gestureGapMs: sectionSettings.wheelGestureGapMs,
@@ -216,7 +214,10 @@ function initProfile() {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     if (event.target instanceof HTMLElement &&
       (event.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName))) return;
-    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      moveToAdjacentSection(event.key === 'ArrowRight' ? 1 : -1);
+    } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
       void move(event.key === 'ArrowDown' ? 1 : -1);
     }
@@ -226,8 +227,10 @@ function initProfile() {
   if (!reducedMotion) fields[0].forEach(({ field }) => { field.textContent = ''; });
   document.documentElement.classList.remove('profile-typing');
   void (async () => {
+    await ensureSectionNav();
+    if (activeRoot !== root) return;
     await revealSlide(0);
-    if (activeRoot === root && !leaving) await writeHomeReturn();
+    if (activeRoot === root) await writeHomeReturn();
   })();
 
   cleanup = () => {

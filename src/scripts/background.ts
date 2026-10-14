@@ -6,6 +6,8 @@ import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-ret
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
 import { getBackgroundPosition, saveBackgroundPosition } from './horizontal-navigation';
+import { ensureSectionNav } from './section-nav';
+import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -34,7 +36,6 @@ function initBackground() {
   const sources = slides.map((_, index) => [...headingSources[index], ...eventSources[index]]);
   const lines = slides.map((slide) => slide.querySelector<HTMLElement>('.timeline-path')!);
   const indicator = document.querySelector<HTMLElement>('[data-slide-indicator][data-axis="vertical"]')!;
-  const homeLink = document.querySelector<HTMLAnchorElement>('[data-home-return]')!;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const restored = getBackgroundPosition();
   const hashSlide = location.hash ? slides.findIndex((slide) => !!slide.querySelector(`[id="${CSS.escape(location.hash.slice(1))}"]`)) : -1;
@@ -42,7 +43,6 @@ function initBackground() {
   const revealed = new Set<number>(restored?.revealed || []);
   const arrivedHeadings = new Set<string>(restored?.headings || []);
   let current = Math.min(initial, slides.length - 1);
-  let leaving = false;
   let moving = false;
   let introAbort: AbortController | undefined;
   let lineAnimation: Animation | undefined;
@@ -110,13 +110,6 @@ function initBackground() {
     }
   };
 
-  const returnHome = () => {
-    if (leaving) return;
-    leaving = true;
-    finishSlide(current);
-    homeLink.click();
-  };
-
   const onProjectLink = (event: MouseEvent) => {
     if (!(event.target instanceof Element) || !event.target.closest('[data-background-project]')) return;
     finishSlide(current);
@@ -124,7 +117,7 @@ function initBackground() {
   };
 
   const moveTo = async (next: number) => {
-    if (moving || leaving || next === current || next < 0 || next >= slides.length) return;
+    if (moving || next === current || next < 0 || next >= slides.length) return;
     const step = Math.sign(next - current);
     moving = true;
     finishSlide(current);
@@ -184,13 +177,19 @@ function initBackground() {
   };
 
   const move = (step: number) => {
-    if (current + step < 0) { if (!moving) returnHome(); return; }
+    if (moving) return;
+    if (current + step < 0) { returnHomeFromFirstSlide(current); return; }
     void moveTo(current + step);
   };
   const stopIndicator = bindSlideIndicator(indicator, (index) => void moveTo(index));
 
   const stopGestures = listenToGestures({
-    actions: { up: () => void move(-1), down: () => void move(1) },
+    actions: {
+      up: () => void move(-1), down: () => void move(1),
+      left: () => moveToAdjacentSection(-1), right: () => moveToAdjacentSection(1),
+    },
+    horizontalThresholdPx: sectionSettings.horizontalWheelThreshold,
+    horizontalWheelLockMs: sectionSettings.horizontalWheelLockMs,
     touchRoot: root,
     thresholdPx: sectionSettings.wheelThreshold,
     gestureGapMs: sectionSettings.wheelGestureGapMs,
@@ -201,7 +200,10 @@ function initBackground() {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     if (event.target instanceof HTMLElement &&
       (event.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(event.target.tagName))) return;
-    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      moveToAdjacentSection(event.key === 'ArrowRight' ? 1 : -1);
+    } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
       void move(event.key === 'ArrowDown' ? 1 : -1);
     }
@@ -221,14 +223,19 @@ function initBackground() {
     lines[current].style.transform = 'scaleY(0)';
   }
   void (async () => {
+    await ensureSectionNav();
+    if (activeRoot !== root) return;
     await revealSlide(current);
-    if (activeRoot !== root || leaving) return;
+    if (activeRoot !== root) return;
     await writeHomeReturn();
   })();
 
   root.addEventListener('click', onProjectLink);
 
   cleanup = () => {
+    if (document.documentElement.dataset.routeDirection !== 'down') {
+      saveBackgroundPosition({ slide: current, revealed: [...revealed], headings: [...arrivedHeadings] });
+    }
     introAbort?.abort();
     slideAnimations.forEach((animation) => animation.cancel());
     lineAnimation?.cancel();

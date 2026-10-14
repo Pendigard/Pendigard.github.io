@@ -19,7 +19,6 @@ import '../../styles/profile.css';
       <div class="profile-slide-inner profile-intro-layout">
         <div class="profile-intro-copy">
           <div class="profile-intro-body">
-            <span class="profile-eyebrow" data-typewriter>Profile.</span>
             <h1 data-typewriter data-profile-heading>{introduction.title}</h1>
             {introduction.paragraphs.map((paragraph) => <p data-typewriter>{paragraph}</p>)}
             <div class="profile-research">
@@ -39,7 +38,6 @@ import '../../styles/profile.css';
 
     <section class="profile-slide profile-skills" data-profile-slide aria-label="Technical Skills">
       <div class="profile-slide-inner">
-        <span class="profile-eyebrow" data-typewriter>Profile.</span>
         <h1 data-typewriter data-profile-heading>Technical Skills.</h1>
         <div class="profile-skill-grid">
           {skillGroups.map((group) => <section class="profile-skill-group">
@@ -52,7 +50,6 @@ import '../../styles/profile.css';
 
     <section class="profile-slide profile-languages" data-profile-slide aria-label="Languages and Communication">
       <div class="profile-slide-inner">
-        <span class="profile-eyebrow" data-typewriter>Profile.</span>
         <h1 data-typewriter data-profile-heading>Languages &amp; Communication.</h1>
         <div class="profile-language-grid">
           {languages.map((language) => <article class="profile-language">
@@ -67,7 +64,6 @@ import '../../styles/profile.css';
 
     <section class="profile-slide profile-hobbies" data-profile-slide aria-label="My Hobbies">
       <div class="profile-slide-inner">
-        <span class="profile-eyebrow" data-typewriter>Profile.</span>
         <h1 data-typewriter data-profile-heading>My Hobbies.</h1>
         <div class="profile-hobby-grid">
           <section><h2 data-typewriter>What I like.</h2><ul>{hobbies.interests.map((interest) => <li data-typewriter>{interest}</li>)}</ul></section>

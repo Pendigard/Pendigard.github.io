@@ -2,10 +2,12 @@ import { animateSlidePair, bindSlideIndicator, updateSlideIndicator } from './se
 import { listenToGestures } from './gestures';
 import { projectSettings } from '../sections/projects/settings';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
-import { contextFromUrl, getProjectsPosition, horizontalPosition, openHorizontalView, returnToPrevious, saveProjectsPosition, updatePreviousLink } from './horizontal-navigation';
+import { contextFromUrl, getProjectsPosition, saveProjectsPosition } from './horizontal-navigation';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
 import { createAutoSelection } from './auto-selection';
+import { ensureSectionNav } from './section-nav';
+import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -22,7 +24,6 @@ function initProjects() {
   const source = root.querySelector<HTMLElement>('[data-projects-source]')!;
   const measure = root.querySelector<HTMLElement>('[data-projects-measure]')!;
   const host = root.querySelector<HTMLElement>('[data-projects-slides]')!;
-  const eyebrow = root.querySelector<HTMLElement>('[data-projects-eyebrow]')!;
   const title = root.querySelector<HTMLElement>('[data-projects-title]')!;
   const selector = root.querySelector<HTMLElement>('[data-projects-selector]')!;
   const prefix = root.querySelector<HTMLElement>('[data-filter-prefix]')!;
@@ -32,16 +33,13 @@ function initProjects() {
   const nextButton = root.querySelector<HTMLButtonElement>('[data-next-candidate]')!;
   const announcement = root.querySelector<HTMLOutputElement>('[data-projects-announcement]')!;
   const indicator = document.querySelector<HTMLElement>('[data-slide-indicator][data-axis="vertical"]')!;
-  const horizontalIndicator = document.querySelector<HTMLElement>('[data-slide-indicator][data-axis="horizontal"]')!;
-  const backLink = document.querySelector<HTMLAnchorElement>('[data-projects-back]')!;
-  const homeLink = document.querySelector<HTMLAnchorElement>('[data-home-return]')!;
   const articles = [...source.querySelectorAll<HTMLElement>('[data-project-id]')];
   const originalText = new Map<HTMLElement, string>();
   articles.forEach((article) => article.querySelectorAll<HTMLElement>('[data-typewriter]')
     .forEach((field) => originalText.set(field, field.textContent || '')));
   const filters = ['All', ...JSON.parse(root.dataset.filters || '[]') as string[]];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const context = contextFromUrl();
+  let context = contextFromUrl();
   const origin = getProjectsPosition(context?.id ?? null);
   let filter = origin && filters.includes(origin.filter) ? origin.filter : 'All';
   const displayTitle = () => context?.title ?? `${filter}.`;
@@ -55,11 +53,10 @@ function initProjects() {
   let demoAbort: AbortController | undefined;
   let clearSkip = () => {};
   let moving = false;
-  let leaving = false;
-  let introPending = !origin && !context && !reducedMotion;
+  let introPending = !origin && !reducedMotion;
   const revealed = new Set(origin?.revealedProjects || []);
 
-  const candidates = () => filters.filter((item) => item !== filter);
+  const candidates = () => context ? filters : filters.filter((item) => item !== filter);
   const candidate = () => candidates()[candidateIndex % candidates().length];
   const candidateButton = (name: string) => {
     const button = document.createElement('button');
@@ -113,7 +110,7 @@ function initProjects() {
   const autoSelection = createAutoSelection({
     intervalMs: projectSettings.selector.autoScrollIntervalMs,
     afterUserMs: projectSettings.selector.autoScrollAfterUserMs,
-    enabled: !reducedMotion && !context,
+    enabled: !reducedMotion,
     move: () => cycleCandidate(1, false, projectSettings.selector.autoScrollStepMs),
     cancelMove: renderCandidate,
   });
@@ -223,9 +220,7 @@ function initProjects() {
     clearSkip();
     clearTypingCursor();
     title.textContent = displayTitle();
-    eyebrow.textContent = 'Projects.';
-    eyebrow.dataset.written = 'true';
-    prefix.textContent = 'You can also look at ';
+    prefix.textContent = 'Feel free to filter by ';
     suffix.textContent = ' projects.';
     if (interruptedIntro) renderCandidate();
     nextButton.hidden = false;
@@ -251,7 +246,6 @@ function initProjects() {
     prepareSlide(current);
     const writeIntro = introPending;
     if (writeHeader) {
-      if (eyebrow.dataset.written !== 'true') eyebrow.textContent = '';
       title.textContent = '';
       if (writeIntro) {
         prefix.textContent = '';
@@ -263,15 +257,10 @@ function initProjects() {
     document.documentElement.classList.remove('projects-typing');
     clearSkip = setSkippableAnimation(finishCurrent);
     if (writeHeader) {
-      if (eyebrow.dataset.written !== 'true') {
-        if (!(await writeText(eyebrow, 'Projects.', projectSettings.writing.eyebrowMs, abort.signal))) return;
-        eyebrow.dataset.written = 'true';
-        if (!(await wait(projectSettings.betweenFieldsMs, abort.signal))) return;
-      }
       if (!(await writeText(title, displayTitle(), projectSettings.writing.titleMs, abort.signal))) return;
       if (writeIntro) {
         if (!(await wait(projectSettings.betweenFieldsMs, abort.signal))) return;
-        if (!(await writeText(prefix, 'You can also look at ', projectSettings.writing.selectorMs, abort.signal))) return;
+        if (!(await writeText(prefix, 'Feel free to filter by ', projectSettings.writing.selectorMs, abort.signal))) return;
         if (!(await wait(projectSettings.betweenFieldsMs, abort.signal))) return;
         const candidateField = track.querySelector<HTMLElement>('[data-candidate]')!;
         if (!(await writeText(candidateField, candidate(), projectSettings.writing.selectorMs, abort.signal))) return;
@@ -301,14 +290,8 @@ function initProjects() {
     if (!abort.signal.aborted && current === 0) await writeHomeReturn();
   };
 
-  const returnHome = () => {
-    if (leaving) return;
-    leaving = true;
-    finishCurrent(false);
-    homeLink.click();
-  };
   const moveTo = async (next: number) => {
-    if (moving || leaving || next === current || next < 0 || next >= slides.length) return;
+    if (moving || next === current || next < 0 || next >= slides.length) return;
     const step = Math.sign(next - current);
     moving = true;
     const interruptedIntro = introPending;
@@ -339,17 +322,25 @@ function initProjects() {
     void revealCurrent();
   };
   const move = (step: number) => {
-    if (current + step < 0) { if (!moving) returnHome(); return; }
+    if (moving) return;
+    if (current + step < 0) { returnHomeFromFirstSlide(current); return; }
     void moveTo(current + step);
   };
   const stopIndicator = bindSlideIndicator(indicator, (index) => void moveTo(index));
 
   const applyFilter = async (nextFilter: string) => {
-    if (moving || nextFilter === filter) return;
+    if (moving || (nextFilter === filter && !context)) return;
     moving = true;
     demoAbort?.abort();
     finishCurrent(false);
     const outgoing = slides[current]?.cloneNode(true) as HTMLElement | undefined;
+    if (context) {
+      context = undefined;
+      history.replaceState(history.state, '', '/projects/');
+      root.querySelectorAll<HTMLAnchorElement>('[data-project-main]').forEach((link) => {
+        if (link.origin === location.origin && /^\/projects\/[^/]+\/?$/.test(link.pathname)) link.search = '';
+      });
+    }
     filter = nextFilter;
     title.textContent = displayTitle();
     title.style.visibility = reducedMotion ? '' : 'hidden';
@@ -385,10 +376,18 @@ function initProjects() {
   };
 
   const stopGestures = listenToGestures({
-    actions: { up: () => void move(-1), down: () => void move(1), ...(context ? { left: () => returnToPrevious(backLink) } : {}) },
+    actions: {
+      up: () => void move(-1), down: () => void move(1),
+      left: () => moveToAdjacentSection(-1), right: () => moveToAdjacentSection(1),
+    },
+    horizontalThresholdPx: projectSettings.horizontalWheelThreshold,
+    horizontalWheelLockMs: projectSettings.horizontalWheelLockMs,
     zones: [{
       element: selector,
-      actions: { up: () => void cycleCandidate(-1), down: () => void cycleCandidate(1) },
+      actions: {
+        up: () => void cycleCandidate(-1), down: () => void cycleCandidate(1),
+        left: () => moveToAdjacentSection(-1), right: () => moveToAdjacentSection(1),
+      },
       thresholdPx: projectSettings.selector.wheelThreshold,
       touchThresholdPx: projectSettings.selector.touchThresholdPx,
     }],
@@ -401,14 +400,17 @@ function initProjects() {
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     if (event.target instanceof HTMLElement && event.target.isContentEditable) return;
-    if (selector.contains(event.target as Node) && ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.key)) {
+    if (selector.contains(event.target as Node) && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
       event.preventDefault();
-      void cycleCandidate(event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1);
+      void cycleCandidate(event.key === 'ArrowDown' ? 1 : -1);
       return;
     }
-    if (event.target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(event.target.tagName)) return;
-    if (event.key === 'ArrowLeft' && context) { event.preventDefault(); returnToPrevious(backLink); }
-    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    if (event.target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(event.target.tagName)
+      && !selector.contains(event.target)) return;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      moveToAdjacentSection(event.key === 'ArrowRight' ? 1 : -1);
+    } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
       void move(event.key === 'ArrowDown' ? 1 : -1);
     }
@@ -443,19 +445,6 @@ function initProjects() {
   };
 
   title.textContent = displayTitle();
-  selector.hidden = !!context;
-  backLink.hidden = !context;
-  if (context) updatePreviousLink(backLink);
-  const horizontal = horizontalPosition();
-  updateSlideIndicator(horizontalIndicator, horizontal.active, horizontal.count);
-  const stopHorizontalIndicator = bindSlideIndicator(horizontalIndicator, (index) => {
-    if (context && index === 0 && !leaving) {
-      finishCurrent();
-      saveProjectsPosition({ filter, slide: current, revealedProjects: [...revealed], context: context.id });
-      leaving = true;
-      openHorizontalView(index, backLink);
-    }
-  });
   root.querySelectorAll<HTMLAnchorElement>('[data-project-main]').forEach((link) => {
     if (context && new URL(link.href).origin === location.origin && /^\/projects\/[^/]+\/?$/.test(new URL(link.href).pathname)) {
       link.search = `?from=${encodeURIComponent(context.id)}`;
@@ -473,7 +462,6 @@ function initProjects() {
     });
     updateIndicator();
     title.textContent = displayTitle();
-    eyebrow.dataset.written = 'true';
     finishHomeReturn();
   } else {
     prepareHomeReturn();
@@ -497,12 +485,13 @@ function initProjects() {
   const onMouseLeave = () => autoSelection.resume();
   selector.addEventListener('mouseenter', onMouseEnter);
   selector.addEventListener('mouseleave', onMouseLeave);
-  const onBackClick = (event: MouseEvent) => { event.preventDefault(); returnToPrevious(backLink); };
-  backLink.addEventListener('click', onBackClick);
   root.addEventListener('click', onProjectClick);
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('resize', onResize);
-  void revealCurrent(!origin);
+  void (async () => {
+    await ensureSectionNav();
+    if (activeRoot === root) await revealCurrent(!origin);
+  })();
 
   cleanup = () => {
     if (document.documentElement.dataset.routeDirection !== 'down') {
@@ -520,14 +509,12 @@ function initProjects() {
     finishHomeReturn();
     stopGestures();
     stopIndicator();
-    stopHorizontalIndicator();
     window.clearTimeout(resizeTimer);
     selector.removeEventListener('click', onSelectorClick);
     selector.removeEventListener('wheel', onWheel, true);
     selector.removeEventListener('touchstart', onTouchStart, true);
     selector.removeEventListener('mouseenter', onMouseEnter);
     selector.removeEventListener('mouseleave', onMouseLeave);
-    backLink.removeEventListener('click', onBackClick);
     root.removeEventListener('click', onProjectClick);
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('resize', onResize);

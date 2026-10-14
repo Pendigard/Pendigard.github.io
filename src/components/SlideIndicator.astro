@@ -1,16 +1,16 @@
 ---
-interface Props { count: number; axis?: 'vertical' | 'horizontal' }
-const { count, axis = 'vertical' } = Astro.props;
+interface Props { count: number }
+const { count } = Astro.props;
 ---
 <div
   class="slide-indicator"
   data-slide-indicator
-  data-axis={axis}
+  data-axis="vertical"
   role="group"
-  aria-label={axis === 'vertical' ? 'Slides' : 'Views'}
+  aria-label="Slides"
   hidden={count < 2}
 >
   {Array.from({ length: count }, (_, index) => (
-    <button type="button" class="slide-indicator-bar" data-slide-index={index} data-active={String(index === 0)} aria-label={`${axis === 'vertical' ? 'Slide' : 'View'} ${index + 1} of ${count}`} aria-current={index === 0 ? 'step' : undefined}></button>
+    <button type="button" class="slide-indicator-bar" data-slide-index={index} data-active={String(index === 0)} aria-label={`Slide ${index + 1} of ${count}`} aria-current={index === 0 ? 'step' : undefined}></button>
   ))}
 </div>

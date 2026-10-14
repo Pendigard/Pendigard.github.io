@@ -4,6 +4,8 @@ export const sectionSettings = {
   betweenFieldsMs: 1,
   homeReturnCharacterMs: 50,
   wheelThreshold: 12,
+  horizontalWheelThreshold: 56,
+  horizontalWheelLockMs: 560,
   wheelGestureGapMs: 45,
   wheelLockMinMs: 180,
   slideMoveMs: 560,

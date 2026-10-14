@@ -4,7 +4,9 @@ import { listenToGestures } from './gestures';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
-import { getDetailPosition, horizontalPosition, openHorizontalView, returnToPrevious, saveDetailPosition, updatePreviousLink } from './horizontal-navigation';
+import { getDetailPosition, returnToPrevious, saveDetailPosition } from './horizontal-navigation';
+import { ensureSectionNav } from './section-nav';
+import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -18,8 +20,6 @@ function initProjectDetail() {
 
   const slides = [...root.querySelectorAll<HTMLElement>('[data-slide]')];
   const indicator = document.querySelector<HTMLElement>('[data-slide-indicator][data-axis="vertical"]')!;
-  const horizontalIndicator = document.querySelector<HTMLElement>('[data-slide-indicator][data-axis="horizontal"]')!;
-  const backLink = document.querySelector<HTMLAnchorElement>('[data-project-back]')!;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const sources = slides.map((slide) => [...slide.querySelectorAll<HTMLElement>('[data-typewriter]')]
     .map((field) => ({ field, value: field.textContent || '' })));
@@ -70,7 +70,7 @@ function initProjectDetail() {
     leaving = true;
     finishCurrent();
     saveDetailPosition(detailKey, { slide: current, revealed: [...revealed] });
-    returnToPrevious(backLink);
+    returnToPrevious();
   };
   const moveTo = async (next: number) => {
     if (moving || leaving || next === current || next < 0 || next >= slides.length) return;
@@ -101,17 +101,25 @@ function initProjectDetail() {
     moving = false;
     void revealCurrent();
   };
-  const move = (step: number) => void moveTo(current + step);
+  const move = (step: number) => {
+    if (moving || leaving) return;
+    if (current + step < 0) { returnHomeFromFirstSlide(current); return; }
+    void moveTo(current + step);
+  };
   const stopIndicator = bindSlideIndicator(indicator, (index) => void moveTo(index));
   const stopGestures = listenToGestures({
-    actions: { up: () => void move(-1), down: () => void move(1), left: returnProjects },
+    actions: {
+      up: () => void move(-1), down: () => void move(1),
+      left: returnProjects, right: () => moveToAdjacentSection(1),
+    },
+    horizontalWheelLockMs: projectSettings.horizontalWheelLockMs,
     touchRoot: root,
     thresholdPx: projectSettings.wheelThreshold,
     gestureGapMs: projectSettings.wheelGestureGapMs,
     cooldownMs: projectSettings.wheelLockMinMs,
     touchThresholdPx: projectSettings.gesture.touchSlideThresholdPx,
     // A sideways impulse should be deliberate before leaving the detail route.
-    horizontalThresholdPx: projectSettings.gesture.horizontalReturnThresholdPx,
+    horizontalThresholdPx: projectSettings.horizontalWheelThreshold,
     touchHorizontalThresholdPx: projectSettings.gesture.touchHorizontalReturnThresholdPx,
   });
   const onKeyDown = (event: KeyboardEvent) => {
@@ -119,7 +127,8 @@ function initProjectDetail() {
     if (event.target instanceof HTMLElement &&
       (event.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(event.target.tagName))) return;
     if (event.key === 'ArrowLeft') { event.preventDefault(); returnProjects(); }
-    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    else if (event.key === 'ArrowRight') { event.preventDefault(); moveToAdjacentSection(1); }
+    else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
       void move(event.key === 'ArrowDown' ? 1 : -1);
     }
@@ -131,23 +140,14 @@ function initProjectDetail() {
     slide.setAttribute('aria-hidden', String(index !== current));
   });
   updateIndicator();
-  updatePreviousLink(backLink);
-  const horizontal = horizontalPosition();
-  updateSlideIndicator(horizontalIndicator, horizontal.active, horizontal.count);
-  const stopHorizontalIndicator = bindSlideIndicator(horizontalIndicator, (index) => {
-    if (leaving || index >= horizontal.active) return;
-    if (index === horizontal.active - 1) { returnProjects(); return; }
-    leaving = true;
-    finishCurrent();
-    saveDetailPosition(detailKey, { slide: current, revealed: [...revealed] });
-    openHorizontalView(index, backLink);
-  });
-  const onBackClick = (event: MouseEvent) => { event.preventDefault(); returnProjects(); };
-  backLink.addEventListener('click', onBackClick);
   prepareHomeReturn();
   window.addEventListener('keydown', onKeyDown);
-  void revealCurrent();
-  if (reducedMotion) void writeHomeReturn();
+  void (async () => {
+    await ensureSectionNav();
+    if (activeRoot !== root || leaving) return;
+    await revealCurrent();
+    if (reducedMotion) await writeHomeReturn();
+  })();
 
   cleanup = () => {
     if (document.documentElement.dataset.routeDirection !== 'down') saveDetailPosition(detailKey, { slide: current, revealed: [...revealed] });
@@ -158,9 +158,7 @@ function initProjectDetail() {
     finishHomeReturn();
     stopGestures();
     stopIndicator();
-    stopHorizontalIndicator();
     window.removeEventListener('keydown', onKeyDown);
-    backLink.removeEventListener('click', onBackClick);
     activeRoot = undefined;
     cleanup = undefined;
   };

@@ -28,41 +28,19 @@ export function projectsUrl(context: string | null) {
 
 export function previousSectionUrl(url: URL = new URL(location.href)) {
   if (/^\/projects\/[^/]+\/?$/.test(url.pathname)) return projectsUrl(contextFromUrl(url)?.id ?? null);
-  if (url.pathname === '/projects/' && contextFromUrl(url)) return `/background/#${contextFromUrl(url)!.id}`;
   return '/projects/';
 }
 
-export function horizontalPosition(url: URL = new URL(location.href)) {
-  const detail = /^\/projects\/[^/]+\/?$/.test(url.pathname);
-  const contextual = !!contextFromUrl(url);
-  return { count: contextual ? (detail ? 3 : 2) : (detail ? 2 : 1), active: contextual ? (detail ? 2 : 1) : (detail ? 1 : 0) };
-}
-
-export function updatePreviousLink(link: HTMLAnchorElement) {
-  link.href = previousSectionUrl();
-  link.textContent = 'Back to the previous section.';
-}
-
-export function returnToPrevious(link: HTMLAnchorElement) {
+export function returnToPrevious() {
+  const destination = previousSectionUrl();
   const parent = history.state?.portfolioParent as string | undefined;
-  if (parent && new URL(parent, location.href).pathname === new URL(link.href).pathname &&
-    new URL(parent, location.href).search === new URL(link.href).search) {
+  if (parent && new URL(parent, location.href).pathname === new URL(destination, location.href).pathname &&
+    new URL(parent, location.href).search === new URL(destination, location.href).search) {
     history.back();
     return true;
   }
-  void navigate(link.href);
+  void navigate(destination);
   return false;
-}
-
-export function openHorizontalView(index: number, previousLink: HTMLAnchorElement) {
-  const position = horizontalPosition();
-  if (index < 0 || index >= position.active) return;
-  if (index === position.active - 1) {
-    returnToPrevious(previousLink);
-    return;
-  }
-  const context = contextFromUrl();
-  if (index === 0 && context) void navigate(`/background/#${encodeURIComponent(context.id)}`);
 }
 
 export function clearHorizontalPositions() {

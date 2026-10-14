@@ -24,7 +24,7 @@
   width: min(100%, 105rem);
   min-height: 100svh;
   margin: 0 auto;
-  padding: clamp(2.4rem, 8vh, 6rem) clamp(3.4rem, 9vw, 9rem) clamp(5.5rem, 12vh, 8rem);
+  padding: clamp(5.5rem, 12vh, 7.5rem) clamp(3.4rem, 9vw, 9rem) clamp(5.5rem, 12vh, 8rem);
 }
 .profile-section.is-enhanced { height: 100svh; overflow: hidden; touch-action: none; }
 .profile-section.is-enhanced .profile-slide {
@@ -37,9 +37,8 @@
 .profile-section.is-enhanced .profile-slide.is-active,
 .profile-section.is-enhanced .profile-slide.is-entering { visibility: visible; }
 
-.profile-eyebrow { display: block; min-height: 1.2em; font-size: clamp(.86rem, 1vw, 1rem); letter-spacing: .025em; }
 .profile-slide h1 {
-  margin: .45em 0 .7em;
+  margin: .12em 0 .7em;
   font-size: clamp(3rem, 5.5vw, 5.8rem);
   font-weight: 400;
   letter-spacing: -.06em;
@@ -55,7 +54,7 @@
 
 .profile-intro-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(13rem, .85fr); gap: clamp(2rem, 5vw, 6rem); align-items: stretch; }
 .profile-intro-copy { display: flex; min-width: 0; flex-direction: column; }
-.profile-intro-body { margin-block: auto; }
+.profile-intro-body { margin-block: auto; transform: translateY(-1.5rem); }
 .profile-intro-copy p { max-width: 62ch; margin: 0 0 1em; font-size: clamp(1.12rem, 1.35vw, 1.48rem); line-height: 1.37; }
 .profile-research { margin-top: clamp(1.5rem, 4vh, 3rem); }
 .profile-research p { max-width: 55ch; font-size: clamp(1rem, 1.2vw, 1.3rem); }
@@ -88,15 +87,16 @@ html.profile-typing .profile-slide:first-child [data-typewriter] { visibility: h
 html.profile-typing .profile-slide:first-child .profile-portrait { visibility: hidden; }
 
 @media (max-width: 680px) {
-  .profile-slide-inner { padding: 2.1rem 2rem 5.4rem; }
-  .profile-slide h1 { font-size: clamp(2.45rem, 11vw, 4.5rem); margin: .42em 0 .5em; }
+  .profile-slide-inner { padding: 4.5rem 2rem 5.4rem; }
+  .profile-slide h1 { font-size: clamp(2.45rem, 11vw, 4.5rem); margin: .12em 0 .5em; }
   .profile-slide h2 { font-size: clamp(1.28rem, 5.7vw, 1.8rem); }
   .profile-intro-layout { display: block; position: relative; }
-  .profile-intro-copy { position: relative; z-index: 1; min-height: calc(100svh - 7.5rem); }
+  .profile-intro-body { transform: translateY(-1rem); }
+  .profile-intro-copy { position: relative; z-index: 1; min-height: calc(100svh - 10.5rem); }
   .profile-intro-copy h1 { max-width: 66%; min-height: 2.2em; }
   .profile-intro-copy p { font-size: clamp(.93rem, 3.65vw, 1.18rem); line-height: 1.24; margin-bottom: .7em; }
   .profile-intro-body > p:first-of-type { margin-top: .25rem; }
-  .profile-portrait { position: absolute; top: 2.1rem; right: 2rem; width: 30%; }
+  .profile-portrait { position: absolute; top: 4.5rem; right: 2rem; width: 30%; }
   .profile-portrait img { height: clamp(7.5rem, 27vh, 12rem); object-position: center 42%; }
   .profile-research { margin-top: .9rem; }
   .profile-research p { font-size: clamp(.9rem, 3.4vw, 1.08rem); }
@@ -116,15 +116,18 @@ html.profile-typing .profile-slide:first-child .profile-portrait { visibility: h
 }
 
 @media (max-width: 380px), (max-height: 650px) {
-  .profile-slide-inner { padding-top: 1.5rem; padding-bottom: 4.2rem; }
-  .profile-slide h1 { margin: .32em 0 .36em; }
-  .profile-intro-copy p { margin-bottom: .55em; line-height: 1.2; }
-  .profile-research { margin-top: .55rem; }
-  .profile-contacts { padding-top: .7rem; }
-  .profile-skill-grid { --profile-skill-gap: .52rem; }
-  .profile-portrait { top: 1.5rem; }
+  .profile-intro-body { transform: none; }
+  .profile-slide-inner { padding-top: 4rem; padding-bottom: 4.2rem; }
+  .profile-skills .profile-slide-inner { padding-top: 3.4rem; }
+  .profile-slide h1 { margin: .12em 0 .36em; }
+  .profile-skills h1 { margin-bottom: .22em; }
+  .profile-intro-copy p { margin-bottom: .3em; line-height: 1.2; }
+  .profile-research { margin-top: .3rem; }
+  .profile-contacts { padding-top: .25rem; }
+  .profile-skill-grid { --profile-skill-gap: .3rem; }
+  .profile-portrait { top: 4rem; }
   .profile-portrait img { height: 7.5rem; }
-  .profile-intro-copy { min-height: calc(100svh - 5.7rem); }
+  .profile-intro-copy { min-height: calc(100svh - 10rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {

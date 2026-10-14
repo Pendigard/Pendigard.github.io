@@ -17,15 +17,12 @@ const { project } = Astro.props as { project: Project };
     {project.detail.map((slide, index) => (
       <section class:list={['project-detail-slide', { 'is-active': index === 0 }]} data-slide id={index === 1 ? 'context' : undefined} aria-label={`${project.title}, slide ${index + 1}`}>
         <div class="project-detail-copy">
-          <span class="projects-eyebrow" data-typewriter>{project.context ? `${project.context}.` : 'Project overview.'}</span>
           <h1 data-typewriter>{slide.heading}</h1>
           <p data-typewriter>{slide.body}</p>
         </div>
       </section>
     ))}
   </main>
-  <a class="project-back" href="/projects/" data-project-back data-astro-prefetch>Back to the previous section.</a>
   <SlideIndicator count={project.detail.length} />
-  <SlideIndicator count={1} axis="horizontal" />
   <script>import '../../scripts/project-detail';</script>
 </BaseLayout>

@@ -1,0 +1,10 @@
+---
+import { sectionNavigation } from '../config/section-navigation';
+const path = Astro.url.pathname;
+---
+<nav class="section-nav" data-section-nav aria-label="Sections">
+  {sectionNavigation.map(({ label, href }) => {
+    const active = path === href || (href === '/projects/' && path.startsWith('/projects/'));
+    return <a href={href} data-section-nav-link data-astro-prefetch aria-current={active ? 'page' : undefined}><span data-nav-label>{label}</span></a>;
+  })}
+</nav>

@@ -40,5 +40,5 @@ export const languages = [
 
 export const hobbies = {
   interests: ['Photography', 'Sports', 'Dragon Quest', 'Learning Languages'],
-  sports: ['Basketball', 'Bouldering', 'Karate', 'Boxing', 'Skiing'],
+  sports: ['Basketball', 'Bouldering', 'Karate (Brown Belt)', 'Boxing', 'Skiing'],
 } as const;

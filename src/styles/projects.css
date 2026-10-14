@@ -23,16 +23,9 @@
 .projects-heading {
   position: absolute;
   z-index: 4;
-  top: clamp(2rem, 7.5vh, 5rem);
+  top: clamp(4rem, 8.5vh, 5rem);
   left: clamp(3.4rem, 9vw, 9rem);
   right: clamp(2rem, 9vw, 9rem);
-}
-
-.projects-eyebrow {
-  display: block;
-  min-height: 1.2em;
-  font-size: var(--projects-font-eyebrow);
-  letter-spacing: .025em;
 }
 
 .projects-heading h1,
@@ -82,7 +75,6 @@
 .projects-next-filter:hover,
 .projects-next-filter:focus-visible { opacity: 1; }
 
-html.projects-typing [data-projects-eyebrow],
 html.projects-typing [data-projects-title],
 html.projects-typing [data-filter-prefix],
 html.projects-typing [data-candidate-track],
@@ -117,7 +109,7 @@ html.projects-typing [data-next-candidate] { visibility: hidden; }
   line-height: 1.08;
   overflow-wrap: anywhere;
 }
-.project-entry h2 a { color: inherit; text-decoration: none; }
+.project-entry h2 a { color: inherit; text-decoration: none; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .12em; }
 .project-entry h2 a:hover,
 .project-entry h2 a:focus-visible { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .12em; }
 .project-secondary-links { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25em .9em; min-height: 1.35em; margin-top: .3rem; font-size: var(--projects-font-entry-link); font-style: italic; }
@@ -136,15 +128,11 @@ html.projects-typing [data-next-candidate] { visibility: hidden; }
 .project-detail-slide.is-entering { visibility: visible; }
 .project-detail-copy { position: absolute; top: 19%; left: clamp(3.4rem, 9vw, 9rem); width: min(70vw, 55rem); }
 .project-detail-copy p { max-width: 64ch; margin: 1.5rem 0 0; font-size: var(--projects-font-detail-body); line-height: 1.37; }
-.project-back { position: fixed; z-index: 20; left: clamp(1.35rem, 4vw, 4.2rem); bottom: clamp(1.25rem, 4vw, 3.6rem); color: inherit; font-family: 'Times New Roman', Georgia, serif; font-weight: 400; letter-spacing: -.057em; font-size: clamp(1.05rem, 1.2vw, 1.25rem); text-decoration: none; }
-.project-back:hover,
-.project-back:focus-visible { text-decoration: underline; text-underline-offset: .15em; }
-.projects-selector[hidden], .project-back[hidden] { display: none; }
 
 @media (max-width: 640px) {
   .projects-section,
   .project-detail { min-height: 31rem; }
-  .projects-heading { top: 5%; left: 2rem; right: 1.35rem; }
+  .projects-heading { top: 3.65rem; left: 2rem; right: 1.35rem; }
   .projects-heading h1,
   .project-detail-copy h1 { font-size: var(--projects-font-heading-mobile); }
   .projects-selector { font-size: var(--projects-font-selector-mobile); }

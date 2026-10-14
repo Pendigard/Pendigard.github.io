@@ -33,7 +33,6 @@ export const projectSettings = {
   },
   gesture: {
     touchSlideThresholdPx: 45,
-    horizontalReturnThresholdPx: 45,
     touchHorizontalReturnThresholdPx: 55,
   },
   resizeDebounceMs: 140,
