@@ -5,8 +5,8 @@ import { clearTypingCursor, wait, writeText } from './typewriter';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
 import { ensureSectionNav } from './section-nav';
-import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
-import { getRevealedSlides, saveRevealedSlides } from './section-reveals';
+import { moveToAdjacentSection, returnHomeFromFirstSlide, shouldRestoreSectionPosition } from './section-navigation';
+import { getSectionState, saveSectionState } from './section-reveals';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -25,8 +25,9 @@ function initPhotos() {
   const homeLink = document.querySelector<HTMLAnchorElement>('[data-home-return]')!;
   const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('[data-section-nav-link]')];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const revealed = getRevealedSlides('/photos/');
-  let current = 0;
+  const saved = getSectionState('/photos/');
+  const revealed = new Set(saved?.revealed || []);
+  let current = shouldRestoreSectionPosition() ? Math.min(saved?.slide ?? 0, slides.length - 1) : 0;
   let moving = false;
   let writingAbort: AbortController | undefined;
   let slideAnimations: Animation[] = [];
@@ -67,8 +68,9 @@ function initPhotos() {
   };
 
   slides.forEach((slide, index) => {
-    slide.inert = index !== 0;
-    slide.setAttribute('aria-hidden', String(index !== 0));
+    slide.classList.toggle('is-active', index === current);
+    slide.inert = index !== current;
+    slide.setAttribute('aria-hidden', String(index !== current));
   });
   root.classList.add('is-enhanced');
   if (revealed.has(0)) finishHomeReturn(); else prepareHomeReturn();
@@ -175,13 +177,13 @@ function initPhotos() {
   void (async () => {
     await ensureSectionNav();
     if (activeRoot !== root) return;
-    await revealSlide(0);
+    await revealSlide(current);
     if (activeRoot === root) await writeHomeReturn();
   })();
 
   cleanup = () => {
     finishSlide(current);
-    if (document.documentElement.dataset.routeDirection !== 'down') saveRevealedSlides('/photos/', revealed);
+    if (document.documentElement.dataset.routeDirection !== 'down') saveSectionState('/photos/', current, revealed);
     writingAbort?.abort();
     slideAnimations.forEach((animation) => animation.cancel());
     cancelAnimationFrame(toneFrame);

@@ -6,8 +6,8 @@ import { clearTypingCursor, replaceText, wait, writeText } from './typewriter';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
 import { setSkippableAnimation } from './skippable';
 import { ensureSectionNav } from './section-nav';
-import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
-import { getRevealedSlides, saveRevealedSlides } from './section-reveals';
+import { moveToAdjacentSection, returnHomeFromFirstSlide, shouldRestoreSectionPosition } from './section-navigation';
+import { getSectionState, saveSectionState } from './section-reveals';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -26,10 +26,11 @@ function initProfile() {
   const portrait = root.querySelector<HTMLElement>('.profile-portrait')!;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hoverCapable = matchMedia('(hover: hover)');
-  const revealed = getRevealedSlides('/profile/');
+  const saved = getSectionState('/profile/');
+  const revealed = new Set(saved?.revealed || []);
   const translationAborts = new Map<HTMLButtonElement, AbortController>();
   const phraseCleanups: (() => void)[] = [];
-  let current = 0;
+  let current = shouldRestoreSectionPosition() ? Math.min(saved?.slide ?? 0, slides.length - 1) : 0;
   let moving = false;
   let introAbort: AbortController | undefined;
   let portraitAnimation: Animation | undefined;
@@ -104,9 +105,12 @@ function initProfile() {
   });
 
   slides.forEach((slide, index) => {
-    slide.inert = index !== 0;
-    slide.setAttribute('aria-hidden', String(index !== 0));
+    slide.classList.toggle('is-active', index === current);
+    slide.inert = index !== current;
+    slide.setAttribute('aria-hidden', String(index !== current));
   });
+  if (revealed.has(2)) root.querySelectorAll<HTMLButtonElement>('[data-language-phrase]')
+    .forEach((button) => { button.dataset.ready = 'true'; });
   root.classList.add('is-enhanced');
   if (revealed.has(0)) finishHomeReturn(); else prepareHomeReturn();
   updateSlideIndicator(indicator, current, slides.length);
@@ -225,18 +229,18 @@ function initProfile() {
   };
   window.addEventListener('keydown', onKeyDown);
 
-  if (!reducedMotion && !revealed.has(0)) fields[0].forEach(({ field }) => { field.textContent = ''; });
+  if (!reducedMotion && !revealed.has(current)) fields[current].forEach(({ field }) => { field.textContent = ''; });
   document.documentElement.classList.remove('profile-typing');
   void (async () => {
     await ensureSectionNav();
     if (activeRoot !== root) return;
-    await revealSlide(0);
+    await revealSlide(current);
     if (activeRoot === root) await writeHomeReturn();
   })();
 
   cleanup = () => {
     finishSlide(current);
-    if (document.documentElement.dataset.routeDirection !== 'down') saveRevealedSlides('/profile/', revealed);
+    if (document.documentElement.dataset.routeDirection !== 'down') saveSectionState('/profile/', current, revealed);
     introAbort?.abort();
     portraitAnimation?.cancel();
     slideAnimations.forEach((animation) => animation.cancel());

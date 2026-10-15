@@ -2,12 +2,12 @@ import { animateSlidePair, bindSlideIndicator, updateSlideIndicator } from './se
 import { listenToGestures } from './gestures';
 import { projectSettings } from '../sections/projects/settings';
 import { finishHomeReturn, prepareHomeReturn, writeHomeReturn } from './home-return';
-import { contextFromUrl, getProjectsPosition, saveProjectsPosition } from './horizontal-navigation';
+import { contextFromUrl, getProjectsPosition, getRevealedProjects, hasVisitedProjects, saveProjectsPosition } from './horizontal-navigation';
 import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
 import { createAutoSelection } from './auto-selection';
 import { ensureSectionNav } from './section-nav';
-import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
+import { moveToAdjacentSection, returnHomeFromFirstSlide, shouldRestoreSectionPosition } from './section-navigation';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -53,8 +53,8 @@ function initProjects() {
   let demoAbort: AbortController | undefined;
   let clearSkip = () => {};
   let moving = false;
-  let introPending = !origin && !reducedMotion;
-  const revealed = new Set(origin?.revealedProjects || []);
+  let introPending = !hasVisitedProjects() && !reducedMotion;
+  const revealed = getRevealedProjects();
 
   const candidates = () => context ? filters : filters.filter((item) => item !== filter);
   const candidate = () => candidates()[candidateIndex % candidates().length];
@@ -497,7 +497,7 @@ function initProjects() {
   root.classList.add('is-enhanced');
   buildSlides();
   if (origin) {
-    current = Math.min(origin.slide, slides.length - 1);
+    current = shouldRestoreSectionPosition() ? Math.min(origin.slide, slides.length - 1) : 0;
     slides.forEach((slide, index) => {
       slide.classList.toggle('is-active', index === current);
       slide.inert = index !== current;

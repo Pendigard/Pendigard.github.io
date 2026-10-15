@@ -7,7 +7,7 @@ import { setSkippableAnimation } from './skippable';
 import { clearTypingCursor, wait, writeText } from './typewriter';
 import { getBackgroundPosition, saveBackgroundPosition } from './horizontal-navigation';
 import { ensureSectionNav } from './section-nav';
-import { moveToAdjacentSection, returnHomeFromFirstSlide } from './section-navigation';
+import { moveToAdjacentSection, returnHomeFromFirstSlide, shouldRestoreSectionPosition } from './section-navigation';
 
 let cleanup: (() => void) | undefined;
 let activeRoot: HTMLElement | undefined;
@@ -39,7 +39,7 @@ function initBackground() {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const restored = getBackgroundPosition();
   const hashSlide = location.hash ? slides.findIndex((slide) => !!slide.querySelector(`[id="${CSS.escape(location.hash.slice(1))}"]`)) : -1;
-  const initial = hashSlide >= 0 ? hashSlide : (restored?.slide ?? 0);
+  const initial = hashSlide >= 0 ? hashSlide : (shouldRestoreSectionPosition() ? restored?.slide ?? 0 : 0);
   const revealed = new Set<number>(restored?.revealed || []);
   const arrivedHeadings = new Set<string>(restored?.headings || []);
   let current = Math.min(initial, slides.length - 1);

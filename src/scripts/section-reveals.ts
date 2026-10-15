@@ -1,14 +1,16 @@
-// In-memory reveal state survives ClientRouter section changes, but not a reload.
-const revealedSlides = new Map<string, Set<number>>();
+// Static sections keep their reveal and position state for one visit to the site.
+export interface SectionState { slide: number; revealed: number[] }
 
-export function getRevealedSlides(section: string) {
-  return new Set(revealedSlides.get(section) || []);
+const sections = new Map<string, SectionState>();
+
+export function getSectionState(section: string): SectionState | undefined {
+  return sections.get(section);
 }
 
-export function saveRevealedSlides(section: string, revealed: Set<number>) {
-  revealedSlides.set(section, new Set(revealed));
+export function saveSectionState(section: string, slide: number, revealed: Set<number>) {
+  sections.set(section, { slide, revealed: [...revealed] });
 }
 
-export function clearRevealedSlides() {
-  revealedSlides.clear();
+export function clearSectionStates() {
+  sections.clear();
 }

@@ -1,19 +1,27 @@
 import { projectContexts } from '../sections/background/content';
 import { navigate } from 'astro:transitions/client';
+import { restoreSectionOnNextNavigation } from './section-navigation';
 
 export interface BackgroundPosition { slide: number; revealed: number[]; headings: string[] }
 export interface ProjectsPosition { filter: string; slide: number; revealedProjects: string[]; context: string | null }
 
 let backgroundPosition: BackgroundPosition | undefined;
-let projectsPosition: ProjectsPosition | undefined;
+const projectsPositions = new Map<string, ProjectsPosition>();
+const revealedProjects = new Set<string>();
 const detailPositions = new Map<string, { slide: number; revealed: number[] }>();
 
 export function saveBackgroundPosition(position: BackgroundPosition) { backgroundPosition = position; }
 export function getBackgroundPosition() { return backgroundPosition; }
-export function saveProjectsPosition(position: ProjectsPosition) { projectsPosition = position; }
-export function getProjectsPosition(context: string | null) {
-  return projectsPosition?.context === context ? projectsPosition : undefined;
+const projectViewKey = (context: string | null) => context === null ? 'all' : `context:${context}`;
+export function saveProjectsPosition(position: ProjectsPosition) {
+  projectsPositions.set(projectViewKey(position.context), position);
+  position.revealedProjects.forEach((id) => revealedProjects.add(id));
 }
+export function getProjectsPosition(context: string | null) {
+  return projectsPositions.get(projectViewKey(context));
+}
+export function getRevealedProjects() { return new Set(revealedProjects); }
+export function hasVisitedProjects() { return projectsPositions.size > 0; }
 export function saveDetailPosition(key: string, position: { slide: number; revealed: number[] }) { detailPositions.set(key, position); }
 export function getDetailPosition(key: string) { return detailPositions.get(key); }
 
@@ -33,6 +41,7 @@ export function previousSectionUrl(url: URL = new URL(location.href)) {
 
 export function returnToPrevious() {
   const destination = previousSectionUrl();
+  restoreSectionOnNextNavigation(destination);
   const parent = history.state?.portfolioParent as string | undefined;
   if (parent && new URL(parent, location.href).pathname === new URL(destination, location.href).pathname &&
     new URL(parent, location.href).search === new URL(destination, location.href).search) {
@@ -45,7 +54,8 @@ export function returnToPrevious() {
 
 export function clearHorizontalPositions() {
   backgroundPosition = undefined;
-  projectsPosition = undefined;
+  projectsPositions.clear();
+  revealedProjects.clear();
   detailPositions.clear();
 }
 
