@@ -124,6 +124,21 @@ body[data-page='home'] .home-return { display: none; }
 .slide-indicator-bar:focus-visible::before { opacity: .7; }
 .slide-indicator-bar:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
 
+@media (min-width: 641px) {
+  .slide-indicator {
+    left: 0;
+    gap: clamp(.3rem, .7vh, .5rem);
+  }
+
+  .slide-indicator-bar {
+    height: calc(var(--indicator-bar-length, 2.6rem) * 1.3);
+  }
+
+  .slide-indicator-bar::before {
+    width: .27rem;
+  }
+}
+
 .typing-cursor::after {
   content: '';
   display: inline-block;
