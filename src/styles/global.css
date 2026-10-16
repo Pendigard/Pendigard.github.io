@@ -126,7 +126,7 @@ body[data-page='home'] .home-return { display: none; }
 
 @media (min-width: 641px) {
   .slide-indicator {
-    left: 0;
+    left: 2.5%;
     gap: clamp(.3rem, .7vh, .5rem);
   }
 
